@@ -1,0 +1,500 @@
+---
+  title: "Tran_Riddle_Historical Embeddings"
+output:
+  word_document: default
+pdf_document: default
+date: "December 3rd, 2024"
+---
+  
+```{r loadPackages, echo = FALSE, message=FALSE}
+########################################################
+
+## What are the historical patterns of social group representations?
+## 14 social groups, 200 years of Google Books Text
+
+########################################################
+
+## Set up R workspace and packages ----
+## Set WD to source file location (python codes, stored data, scripts, etc. can all be shared to one folder for ease of use)
+# setwd("**")
+
+# load packages
+if (!require("corrplot")) {install.packages("corrplot", dependencies = TRUE);require(corrplot)}
+if (!require("reticulate")) {install.packages("reticulate", dependencies = TRUE);require(reticulate)}
+if (!require("lsa")) {install.packages("lsa", dependencies = TRUE);require(lsa)}
+if (!require("dplyr")) {install.packages("dplyr", dependencies = TRUE);require(dplyr)}
+if (!require("devtools")) {install.packages("devtools", dependencies = TRUE);require(devtools)}
+# if (!require("sweater")) {devtools::install_github("chainsawriot/sweater");require(sweater)} 
+if (!require("sweater")) {install.packages("sweater");require(sweater)} 
+# contains convenience functions for embeddings analyses
+# see: https://rdrr.io/github/chainsawriot/sweater/f/README.md
+```
+
+```{r loadWords, include=FALSE}
+## Load in data ----
+## Set WD to word stimuli
+setwd("wordstim")
+
+# Specific group examples and new lists
+groupwrds <- read.csv("groupstimlists.csv", header = FALSE)
+groupwrds <- as.data.frame(t(groupwrds))
+colnames(groupwrds) <- as.character(groupwrds[1, ])
+groupwrds <- groupwrds[-1, ]
+
+## List of traits
+agenticlist <- read.delim("agentic.txt", header = FALSE)
+colnames(agenticlist) <- "agentic"
+agentic <- as.vector(agenticlist$agentic)
+
+## List of jobs
+communallist <- read.delim("communal.txt", header = FALSE)
+colnames(communallist) <- "communal"
+communal <- as.vector(communallist$communal)
+
+## List of traits
+traitlist <- read.delim("traitlist.txt", header = FALSE)
+colnames(traitlist) <- "trait"
+trait <- as.vector(traitlist$trait)
+
+## List of traits
+joblist <- read.delim("joblist.txt", header = FALSE)
+colnames(joblist) <- "job"
+job <- as.vector(joblist$job)
+```
+
+
+```{r loadVectors, echo=FALSE, message=FALSE}
+if (!exists("wordvecs.dat", envir = .GlobalEnv)) {
+  load("engall/wordvecsdata_engall.RData", envir = .GlobalEnv)
+}
+# Check unavailable words by decade ----
+unavwords <- list()
+n_avwords <- vector()
+for (i in 1:length(wordvecs.dat)) {
+  unavwords[[i]] <-
+    rownames(wordvecs.dat[[i]])[which(wordvecs.dat[[i]]$V1 == 0)]
+  wordvecs.dat[[i]]$V1
+  n_avwords[i] <-
+    length(wordvecs.dat[[i]]$V1) - length(unavwords[[i]])
+}
+if (!exists("wordvecs.dat_coha", envir = .GlobalEnv)) {
+  load("coha/wordvecsdata_coha.RData", envir = .GlobalEnv)
+}
+unavwords_coha <- list()
+n_avwords_coha <- vector()
+for (i in 1:length(wordvecs.dat_coha)) {
+  unavwords_coha[[i]] <-
+    rownames(wordvecs.dat_coha[[i]])[which(wordvecs.dat_coha[[i]]$V1 == 0)]
+  n_avwords_coha[i] <-
+    length(wordvecs.dat_coha[[i]]$V1) - length(unavwords_coha[[i]])
+}
+```
+
+```{r importantFunction, echo=FALSE, message=FALSE}
+grpwrdassoc_rel <-
+  function(group1index,
+           group2index,
+           wordterms,
+           wordvecs.dat = wordvecs.dat,
+           unavwords = unavwords) {
+    # Create lists of the group's available words
+    availwrds_decade_group1 <- list()
+    availwrds_decade_group2 <- list()
+    for (i in 1:length(wordvecs.dat)) {
+      availwrds_decade_group1[[i]] <-
+        groupwrds[, group1index][groupwrds[, group1index] %in% unavwords[[i]] == FALSE]
+      availwrds_decade_group2[[i]] <-
+        groupwrds[, group2index][groupwrds[, group2index] %in% unavwords[[i]] == FALSE]
+    }
+    
+    # Now compute MAC from available words for each decade
+    wordvecs.mat <- list()
+    mac_group1_2list <- list()
+    cor_group1_2 <- list()
+    cor_group1_2ts <- vector()
+    for (i in 1:length(wordvecs.dat)) {
+      wordvecs.mat[[i]] <- as.matrix(wordvecs.dat[[i]])
+      mac_group1_2list[[i]] <-
+        data.frame(
+          grp1ef = mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group1[[i]])$P,
+          grp2ef = mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group2[[i]])$P,
+          trait = names(
+            mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group1[[i]])$P
+          )
+        )
+      cor_group1_2[[i]] <-
+        cor.test(mac_group1_2list[[i]]$grp2ef, mac_group1_2list[[i]]$grp1ef)
+      cor_group1_2ts[i] <- cor_group1_2[[i]]$estimate
+      cor_group1_2ts <-
+        ts(
+          cor_group1_2ts,
+          start = 1800,
+          end = 1990,
+          frequency = 1 / 10
+        )
+      print(i)
+    }
+    output_rel <- list(mac_group1_2list,
+                       cor_group1_2ts)
+    return(output_rel)
+  }
+```
+
+```{r helperFunctions, echo = FALSE, message = FALSE}
+generate_data <- function(group1index,
+                          group2index,
+                          wordterms,
+                          corpus) {
+  file_path <- paste0("outputs/",
+                      paste(group1index, group2index, wordterms, corpus, sep = "_"),
+                      ".RData")
+  if (file.exists(file_path)) {
+    # Load the object from the .RData file into a temporary environment
+    temp_env <- new.env()
+    load(file_path, envir = temp_env)  # Load the object
+    output <- temp_env$output  # Access the loaded object
+  } else {
+    if (corpus == "coha") {
+      wordvecs.dat_selected <- wordvecs.dat_coha
+      unavwords_selected <- unavwords_coha
+    } else {
+      wordvecs.dat_selected <- wordvecs.dat
+      unavwords_selected <- unavwords
+    }
+    output <- grpwrdassoc_rel(
+      group1index = group1index,
+      group2index = group2index,
+      wordterms = get(wordterms),
+      wordvecs.dat = wordvecs.dat_selected,
+      unavwords = unavwords_selected
+    )
+    
+    if (!dir.exists("outputs")) {
+      dir.create("outputs")  # Create the outputs directory if it doesn't exist
+    }
+    save(output, file = file_path)  # Save the newly created object
+  }
+  
+  return(output)  # Return the output object
+}
+get_data_internal <- function(group1index,
+                              group2index,
+                              wordterms,
+                              corpus,
+                              decade = NULL) {
+  data <- generate_data(
+    group1index = group1index,
+    group2index = group2index,
+    wordterms = wordterms,
+    corpus = corpus
+  )
+  if (is.null(decade)) {
+    output <- data[[2]]
+  } else {
+    output <- data[[1]][[(decade - 1790) / 10]]
+    attr(output, "decade") <- decade
+  }
+  attr(output, "group1index") <- group1index
+  attr(output, "group2index") <- group2index
+  attr(output, "wordterms") <- wordterms
+  attr(output, "corpus") <- corpus
+  
+  return(output)
+}
+get_ts <- function(group1index,
+                   group2index,
+                   wordterms,
+                   corpus) {
+  get_data_internal(group1index, group2index, wordterms, corpus)
+}
+get_decade <-
+  function(group1index,
+           group2index,
+           wordterms,
+           corpus,
+           decade) {
+    get_data_internal(group1index, group2index, wordterms, corpus, decade = decade)
+  }
+ts1 <- get_ts("men", "women", "agentic", "engall")
+ts2 <- get_ts("men", "women", "agentic", "coha")
+decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
+decade2 <- get_decade("men", "women", "agentic", "coha", 1800)
+```
+
+```{r makePlotsRevised, echo=FALSE, message=FALSE}
+library(ggplot2)
+
+plot_one_ts <-
+  function(ts_data) {
+    ts_df <- data.frame(Year = seq(from = 1800, to = 1990, by = 10),
+                        Value = as.vector(ts_data))
+    group1 <- attr(ts_data, "group1index")
+    group2 <- attr(ts_data, "group2index")
+    word_term <- attr(ts_data, "wordterms")
+    corpus <- attr(ts_data, "corpus")
+    title <-
+      paste(group1, "vs", group2, ",", word_term, "(", corpus, ")")
+    p <- ggplot(ts_df, aes(x = Year, y = Value)) +
+      geom_line(color = "blue") +
+      labs(title = title, x = "Year", y = "Value") +
+      theme_minimal()
+    
+    return(p)
+  }
+
+plot_multiple_ts <- function(ts_list) {
+  # Create an empty data frame to store all the time series data
+  combined_df <- data.frame()
+  
+  # Loop through each time series in the list and prepare the data for plotting
+  for (i in seq_along(ts_list)) {
+    ts_data <- ts_list[[i]]
+    ts_df <- data.frame(
+      Year = seq(from = 1800, to = 1990, by = 10),
+      Value = as.vector(ts_data),
+      group1 = attr(ts_data, "group1index"),
+      group2 = attr(ts_data, "group2index"),
+      word_term = attr(ts_data, "wordterms"),
+      corpus = attr(ts_data, "corpus")
+    )
+    combined_df <- rbind(combined_df, ts_df)
+  }
+  
+  # Create the plot with facets by corpus
+  p <-
+    ggplot(combined_df, aes(
+      x = Year,
+      y = Value,
+      color = interaction(group1, group2, word_term)
+    )) +
+    geom_line() +
+    labs(title = "Multiple Time Series Plot", x = "Year", y = "Similarity Coefficient") +
+    facet_wrap( ~ corpus, scales = "fixed") +
+    theme_minimal() + guides(color = guide_legend(title = NULL))
+  
+  return(p)
+}
+
+
+
+plot_one_decade <-
+  function(decade_data) {
+    group1 <- attr(decade_data, "group1index")
+    group2 <- attr(decade_data, "group2index")
+    word_term <- attr(decade_data, "wordterms")
+    corpus <- attr(decade_data, "corpus")
+    decade <- attr(decade_data, "decade")
+    title <-
+      paste(group1, "vs", group2, ",", word_term, "(", corpus, ",", decade, ")")
+    p <- ggplot(decade_data, aes(x = grp1ef, y = grp2ef)) +
+      geom_point(color = "blue") + geom_text(aes(label = trait), vjust = -0.5, size = 3) +
+      labs(title = title, x = group1, y = group2) +
+      theme_minimal()
+    
+    return(p)
+  }
+```
+
+```{r plottingDecade}
+
+plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
+plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
+
+plot_one_decade(get_decade("men", "women", "communal", "engall", 1800))
+plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
+
+print(get_decade("men", "women", "agentic", "engall", 1990))
+```
+
+```{r getMagnitudes}
+# Initialize an empty data frame to store results
+results_df <- data.frame(
+  year = integer(),
+  agentic_coha_men = numeric(),
+  agentic_coha_women = numeric(),
+  agentic_engall_men = numeric(),
+  agentic_engall_women = numeric(),
+  communal_coha_men = numeric(),
+  communal_coha_women = numeric(),
+  communal_engall_men = numeric(),
+  communal_engall_women = numeric(),
+  stringsAsFactors = FALSE
+)
+
+# Define the parameters to iterate over
+traits <- c("agentic", "communal")
+corpora <- c("coha", "engall")
+years <- seq(1800, 1990, by = 10)
+
+# Loop through each year
+for (year in years) {
+  # Create a temporary vector to store the values for the current year
+  temp_row <- c(year)
+  
+  # Loop through each combination of trait and corpus
+  for (trait in traits) {
+    for (corpus in corpora) {
+      # Call the get_decade function
+      df <- get_decade("men", "women", trait, corpus, year)
+      
+      # Calculate the mean of men and women individually
+      mean_men <- mean(df$grp1ef, na.rm = TRUE)
+      mean_women <- mean(df$grp2ef, na.rm = TRUE)
+      
+      # Append the means to the temporary row
+      temp_row <- c(temp_row, mean_men, mean_women)
+    }
+  }
+  
+  # Append the temporary row to the results_df data frame
+  results_df <- rbind(results_df, temp_row)
+}
+
+# Set the column names for the results data frame
+colnames(results_df) <- c(
+  "year",
+  "agentic_coha_men", "agentic_coha_women",
+  "agentic_engall_men", "agentic_engall_women",
+  "communal_coha_men", "communal_coha_women",
+  "communal_engall_men", "communal_engall_women"
+)
+
+# Display the results
+print(results_df)
+
+```
+
+```{r plottingTsHumanNonhuman}
+plot_one_ts(get_ts("nonhuman", "women", "trait", "coha"))
+plot_one_ts(get_ts("nonhuman", "men", "trait", "coha"))
+
+human_nonhuman_ts<-list(get_ts("nonhuman", "women", "trait", "coha"),get_ts("nonhuman", "men", "trait", "coha"), get_ts("nonhuman", "women", "trait", "engall"),get_ts("nonhuman", "men", "trait", "engall"),get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "trait", "coha"))
+plot_multiple_ts(human_nonhuman_ts)
+
+plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
+
+```
+
+```{r plottingTsHumanNonhuman}
+plot_one_ts(get_ts("men", "women", "trait", "coha"))
+plot_one_ts(get_ts("men", "women", "job", "coha"))
+
+men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("men", "women", "job", "coha"), get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "job", "engall"))
+plot_multiple_ts(men_women_trait_job_ts)
+
+# plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
+
+```
+
+```{r models, include=FALSE}
+library(haven)
+library(tidyverse)
+library(psych)
+library(readxl)
+df <- read_excel("Diff_Score.xlsx")
+
+
+job_ts <- get_ts("men", "women", "job", "coha")
+trait_ts <- get_ts("men", "women", "trait", "coha")
+
+df$Job <- as.vector(job_ts)
+df$Trait <- as.vector(trait_ts)
+
+df$JobStd <- as.vector(scale(df$Job))
+df$TraitStd <- as.vector(scale(df$Trait))
+
+
+library(lavaan)
+
+model1 <- '
+  JobStd ~ a*YearSTD
+  TraitStd ~ b*JobStd
+  TraitStd ~ c*YearSTD
+  ind := a*b
+  total := c + (a*b)
+'
+m1 <- sem(model1, data = df, fixed.x= FALSE)
+summary(m1, standardized = TRUE, fit.measures = TRUE)
+
+model2 <- '
+  reppres ~ a*YearSTD
+  TraitStd ~ b*reppres
+  TraitStd ~ c*YearSTD
+  ind := a*b
+  total := c + (a*b)
+'
+m2 <- sem(model2, data = df, fixed.x= FALSE)
+summary(m2, standardized = TRUE, fit.measures = TRUE)
+
+model3 <- '
+  PCE ~ a*YearSTD
+  TraitStd ~ b*PCE
+  TraitStd ~ c*YearSTD
+  ind := a*b
+  total := c + (a*b)
+'
+m3 <- sem(model3, data = df, fixed.x= FALSE)
+summary(m3, standardized = TRUE, fit.measures = TRUE)
+
+model4 <- '
+  Wlabor ~ a*YearSTD
+  TraitStd ~ b*Wlabor
+  TraitStd ~ c*YearSTD
+  ind := a*b
+  total := c + (a*b)
+'
+m4 <- sem(model4, data = df, fixed.x= FALSE)
+summary(m4, standardized = TRUE, fit.measures = TRUE)
+
+model5 <- '
+  reppres ~ YearSTD
+  JobStd ~ reppres
+  reppres  ~ TraitStd
+  TraitStd ~ JobStd
+  TraitStd ~ YearSTD
+'
+m5 <- sem(model5, data = df, fixed.x= FALSE)
+summary(m5, standardized = TRUE, fit.measures = TRUE)
+modificationindices(m5, sort. = TRUE, minimum.value = 3.84)
+
+model6 <- '
+  Wlabor ~ YearSTD
+  JobStd ~ Wlabor
+  Wlabor ~ TraitStd
+  TraitStd ~ JobStd
+  TraitStd ~ YearSTD
+'
+m6 <- sem(model6, data = df, fixed.x= FALSE)
+summary(m6, standardized = TRUE, fit.measures = TRUE)
+modificationindices(m6, sort. = TRUE, minimum.value = 3.84)
+
+model7 <- '
+  PCE ~ YearSTD
+  JobStd ~ PCE
+  PCE ~ TraitStd
+  TraitStd ~ JobStd
+  TraitStd ~ YearSTD
+'
+m7 <- sem(model7, data = df, fixed.x= FALSE)
+summary(m7, standardized = TRUE, fit.measures = TRUE)
+
+library(dplyr)
+
+# Create lagged variables
+df <- df %>%
+  mutate(YearSTD_Lag1 = lag(YearSTD, 1),
+         JobStd_Lag1 = lag(JobStd, 1),
+         TraitStd_Lag1 = lag(TraitStd, 1))
+
+model1_lagged <- '
+  JobStd ~ a*YearSTD
+  TraitStd ~ b*JobStd_Lag1
+  TraitStd ~ c*YearSTD_Lag1
+  ind := a*b
+  total := c + (a*b)
+'
+m1_lagged <- sem(model1_lagged, data = df, fixed.x = FALSE)
+summary(m1_lagged, standardized = TRUE, fit.measures = TRUE)
+
+
+```
