@@ -1,8 +1,7 @@
 ---
-  title: "Tran_Riddle_Historical Embeddings"
+title: "Tran_Riddle_Historical Embeddings"
 output:
-  word_document: default
-pdf_document: default
+  md_document: default
 date: "December 3rd, 2024"
 ---
   
@@ -375,7 +374,7 @@ plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
 
 ```
 
-```{r plottingTsHumanNonhuman}
+```{r plottingTsMenWomen}
 plot_one_ts(get_ts("men", "women", "trait", "coha"))
 plot_one_ts(get_ts("men", "women", "job", "coha"))
 
@@ -383,118 +382,5 @@ men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("me
 plot_multiple_ts(men_women_trait_job_ts)
 
 # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
-
-```
-
-```{r models, include=FALSE}
-library(haven)
-library(tidyverse)
-library(psych)
-library(readxl)
-df <- read_excel("Diff_Score.xlsx")
-
-
-job_ts <- get_ts("men", "women", "job", "coha")
-trait_ts <- get_ts("men", "women", "trait", "coha")
-
-df$Job <- as.vector(job_ts)
-df$Trait <- as.vector(trait_ts)
-
-df$JobStd <- as.vector(scale(df$Job))
-df$TraitStd <- as.vector(scale(df$Trait))
-
-
-library(lavaan)
-
-model1 <- '
-  JobStd ~ a*YearSTD
-  TraitStd ~ b*JobStd
-  TraitStd ~ c*YearSTD
-  ind := a*b
-  total := c + (a*b)
-'
-m1 <- sem(model1, data = df, fixed.x= FALSE)
-summary(m1, standardized = TRUE, fit.measures = TRUE)
-
-model2 <- '
-  reppres ~ a*YearSTD
-  TraitStd ~ b*reppres
-  TraitStd ~ c*YearSTD
-  ind := a*b
-  total := c + (a*b)
-'
-m2 <- sem(model2, data = df, fixed.x= FALSE)
-summary(m2, standardized = TRUE, fit.measures = TRUE)
-
-model3 <- '
-  PCE ~ a*YearSTD
-  TraitStd ~ b*PCE
-  TraitStd ~ c*YearSTD
-  ind := a*b
-  total := c + (a*b)
-'
-m3 <- sem(model3, data = df, fixed.x= FALSE)
-summary(m3, standardized = TRUE, fit.measures = TRUE)
-
-model4 <- '
-  Wlabor ~ a*YearSTD
-  TraitStd ~ b*Wlabor
-  TraitStd ~ c*YearSTD
-  ind := a*b
-  total := c + (a*b)
-'
-m4 <- sem(model4, data = df, fixed.x= FALSE)
-summary(m4, standardized = TRUE, fit.measures = TRUE)
-
-model5 <- '
-  reppres ~ YearSTD
-  JobStd ~ reppres
-  reppres  ~ TraitStd
-  TraitStd ~ JobStd
-  TraitStd ~ YearSTD
-'
-m5 <- sem(model5, data = df, fixed.x= FALSE)
-summary(m5, standardized = TRUE, fit.measures = TRUE)
-modificationindices(m5, sort. = TRUE, minimum.value = 3.84)
-
-model6 <- '
-  Wlabor ~ YearSTD
-  JobStd ~ Wlabor
-  Wlabor ~ TraitStd
-  TraitStd ~ JobStd
-  TraitStd ~ YearSTD
-'
-m6 <- sem(model6, data = df, fixed.x= FALSE)
-summary(m6, standardized = TRUE, fit.measures = TRUE)
-modificationindices(m6, sort. = TRUE, minimum.value = 3.84)
-
-model7 <- '
-  PCE ~ YearSTD
-  JobStd ~ PCE
-  PCE ~ TraitStd
-  TraitStd ~ JobStd
-  TraitStd ~ YearSTD
-'
-m7 <- sem(model7, data = df, fixed.x= FALSE)
-summary(m7, standardized = TRUE, fit.measures = TRUE)
-
-library(dplyr)
-
-# Create lagged variables
-df <- df %>%
-  mutate(YearSTD_Lag1 = lag(YearSTD, 1),
-         JobStd_Lag1 = lag(JobStd, 1),
-         TraitStd_Lag1 = lag(TraitStd, 1))
-
-model1_lagged <- '
-  JobStd ~ a*YearSTD
-  TraitStd ~ b*JobStd_Lag1
-  TraitStd ~ c*YearSTD_Lag1
-  ind := a*b
-  total := c + (a*b)
-'
-m1_lagged <- sem(model1_lagged, data = df, fixed.x = FALSE)
-summary(m1_lagged, standardized = TRUE, fit.measures = TRUE)
-
 
 ```
