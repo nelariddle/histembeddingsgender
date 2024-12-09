@@ -1,8 +1,8 @@
 ---
 title: "Tran_Riddle_Historical Embeddings"
-output:
-  md_document: default
-date: "December 3rd, 2024"
+output: github_document
+date: December 3, 2024
+author: Nela Riddle
 ---
   
 ```{r loadPackages, echo = FALSE, message=FALSE}
