@@ -1,32 +1,53 @@
-    plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
+Tran_Riddle_Historical Embeddings
+================
+Nela Riddle
+December 3, 2024
+
+    ## Warning: package 'corrplot' was built under R version 4.3.3
+
+    ## Warning: package 'reticulate' was built under R version 4.3.3
+
+    ## Warning: package 'sweater' was built under R version 4.3.3
+
+``` r
+plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
+```
 
     ## Warning: Removed 57 rows containing missing values (`geom_point()`).
 
     ## Warning: Removed 57 rows containing missing values (`geom_text()`).
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingDecade-1.png)
+![](histembeddingsGender_files/figure-gfm/plottingDecade-1.png)<!-- -->
 
-    plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
+``` r
+plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
+```
 
     ## Warning: Removed 1 rows containing missing values (`geom_point()`).
 
     ## Warning: Removed 1 rows containing missing values (`geom_text()`).
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingDecade-2.png)
+![](histembeddingsGender_files/figure-gfm/plottingDecade-2.png)<!-- -->
 
-    plot_one_decade(get_decade("men", "women", "communal", "engall", 1800))
+``` r
+plot_one_decade(get_decade("men", "women", "communal", "engall", 1800))
+```
 
     ## Warning: Removed 93 rows containing missing values (`geom_point()`).
 
     ## Warning: Removed 93 rows containing missing values (`geom_text()`).
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingDecade-3.png)
+![](histembeddingsGender_files/figure-gfm/plottingDecade-3.png)<!-- -->
 
-    plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
+``` r
+plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
+```
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingDecade-4.png)
+![](histembeddingsGender_files/figure-gfm/plottingDecade-4.png)<!-- -->
 
-    print(get_decade("men", "women", "agentic", "engall", 1990))
+``` r
+print(get_decade("men", "women", "agentic", "engall", 1990))
+```
 
     ##                       grp1ef        grp2ef          trait
     ## able            0.0383009843 -0.0193022341           able
@@ -222,60 +243,62 @@
     ## winnings        0.0633482608  0.0474382181       winnings
     ## wit             0.1204277190  0.0781132559            wit
 
-    # Initialize an empty data frame to store results
-    results_df <- data.frame(
-      year = integer(),
-      agentic_coha_men = numeric(),
-      agentic_coha_women = numeric(),
-      agentic_engall_men = numeric(),
-      agentic_engall_women = numeric(),
-      communal_coha_men = numeric(),
-      communal_coha_women = numeric(),
-      communal_engall_men = numeric(),
-      communal_engall_women = numeric(),
-      stringsAsFactors = FALSE
-    )
+``` r
+# Initialize an empty data frame to store results
+results_df <- data.frame(
+  year = integer(),
+  agentic_coha_men = numeric(),
+  agentic_coha_women = numeric(),
+  agentic_engall_men = numeric(),
+  agentic_engall_women = numeric(),
+  communal_coha_men = numeric(),
+  communal_coha_women = numeric(),
+  communal_engall_men = numeric(),
+  communal_engall_women = numeric(),
+  stringsAsFactors = FALSE
+)
 
-    # Define the parameters to iterate over
-    traits <- c("agentic", "communal")
-    corpora <- c("coha", "engall")
-    years <- seq(1800, 1990, by = 10)
+# Define the parameters to iterate over
+traits <- c("agentic", "communal")
+corpora <- c("coha", "engall")
+years <- seq(1800, 1990, by = 10)
 
-    # Loop through each year
-    for (year in years) {
-      # Create a temporary vector to store the values for the current year
-      temp_row <- c(year)
+# Loop through each year
+for (year in years) {
+  # Create a temporary vector to store the values for the current year
+  temp_row <- c(year)
+  
+  # Loop through each combination of trait and corpus
+  for (trait in traits) {
+    for (corpus in corpora) {
+      # Call the get_decade function
+      df <- get_decade("men", "women", trait, corpus, year)
       
-      # Loop through each combination of trait and corpus
-      for (trait in traits) {
-        for (corpus in corpora) {
-          # Call the get_decade function
-          df <- get_decade("men", "women", trait, corpus, year)
-          
-          # Calculate the mean of men and women individually
-          mean_men <- mean(df$grp1ef, na.rm = TRUE)
-          mean_women <- mean(df$grp2ef, na.rm = TRUE)
-          
-          # Append the means to the temporary row
-          temp_row <- c(temp_row, mean_men, mean_women)
-        }
-      }
+      # Calculate the mean of men and women individually
+      mean_men <- mean(df$grp1ef, na.rm = TRUE)
+      mean_women <- mean(df$grp2ef, na.rm = TRUE)
       
-      # Append the temporary row to the results_df data frame
-      results_df <- rbind(results_df, temp_row)
+      # Append the means to the temporary row
+      temp_row <- c(temp_row, mean_men, mean_women)
     }
+  }
+  
+  # Append the temporary row to the results_df data frame
+  results_df <- rbind(results_df, temp_row)
+}
 
-    # Set the column names for the results data frame
-    colnames(results_df) <- c(
-      "year",
-      "agentic_coha_men", "agentic_coha_women",
-      "agentic_engall_men", "agentic_engall_women",
-      "communal_coha_men", "communal_coha_women",
-      "communal_engall_men", "communal_engall_women"
-    )
+# Set the column names for the results data frame
+colnames(results_df) <- c(
+  "year",
+  "agentic_coha_men", "agentic_coha_women",
+  "agentic_engall_men", "agentic_engall_women",
+  "communal_coha_men", "communal_coha_women",
+  "communal_engall_men", "communal_engall_women"
+)
 
-    # Display the results
-    print(results_df)
+# Display the results
+print(results_df)
+```
 
     ##    year agentic_coha_men agentic_coha_women agentic_engall_men agentic_engall_women communal_coha_men
     ## 1  1800      0.084520244       0.1834998786        0.017776823         -0.010094393        0.06831522
@@ -320,38 +343,54 @@
     ## 19          0.13549703          0.04334782            0.03667643
     ## 20          0.11913105          0.03927364            0.03128763
 
-    plot_one_ts(get_ts("nonhuman", "women", "trait", "coha"))
+``` r
+plot_one_ts(get_ts("nonhuman", "women", "trait", "coha"))
+```
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingTsHumanNonhuman-1.png)
+![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-1.png)<!-- -->
 
-    plot_one_ts(get_ts("nonhuman", "men", "trait", "coha"))
+``` r
+plot_one_ts(get_ts("nonhuman", "men", "trait", "coha"))
+```
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingTsHumanNonhuman-2.png)
+![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-2.png)<!-- -->
 
-    human_nonhuman_ts<-list(get_ts("nonhuman", "women", "trait", "coha"),get_ts("nonhuman", "men", "trait", "coha"), get_ts("nonhuman", "women", "trait", "engall"),get_ts("nonhuman", "men", "trait", "engall"),get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "trait", "coha"))
-    plot_multiple_ts(human_nonhuman_ts)
+``` r
+human_nonhuman_ts<-list(get_ts("nonhuman", "women", "trait", "coha"),get_ts("nonhuman", "men", "trait", "coha"), get_ts("nonhuman", "women", "trait", "engall"),get_ts("nonhuman", "men", "trait", "engall"),get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "trait", "coha"))
+plot_multiple_ts(human_nonhuman_ts)
+```
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingTsHumanNonhuman-3.png)
+![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-3.png)<!-- -->
 
-    plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
+``` r
+plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
+```
 
     ## Warning: Removed 17 rows containing missing values (`geom_point()`).
 
     ## Warning: Removed 17 rows containing missing values (`geom_text()`).
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingTsHumanNonhuman-4.png)
+![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-4.png)<!-- -->
 
-    plot_one_ts(get_ts("men", "women", "trait", "coha"))
+``` r
+plot_one_ts(get_ts("men", "women", "trait", "coha"))
+```
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingTsMenWomen-1.png)
+![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-1.png)<!-- -->
 
-    plot_one_ts(get_ts("men", "women", "job", "coha"))
+``` r
+plot_one_ts(get_ts("men", "women", "job", "coha"))
+```
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingTsMenWomen-2.png)
+![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-2.png)<!-- -->
 
-    men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("men", "women", "job", "coha"), get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "job", "engall"))
-    plot_multiple_ts(men_women_trait_job_ts)
+``` r
+men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("men", "women", "job", "coha"), get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "job", "engall"))
+plot_multiple_ts(men_women_trait_job_ts)
+```
 
-![](histembeddingsGender_files/figure-markdown_strict/plottingTsMenWomen-3.png)
+![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-3.png)<!-- -->
 
-    # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
+``` r
+# plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
+```
