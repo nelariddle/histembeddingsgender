@@ -403,7 +403,7 @@ plot_one_ts(get_ts("men", "women", "job", "coha"))
 men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("men", "women", "job", "coha"), get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "job", "engall"))
 plot_multiple_ts(men_women_trait_job_ts)
 
-men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"), get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"))
+men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"),get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"))
 plot_multiple_ts(men_women_trait_job_ts)
 
 # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
