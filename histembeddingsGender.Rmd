@@ -1,6 +1,6 @@
 ---
 title: "Tran_Riddle_Historical Embeddings"
-output: rmarkdown::github_document
+output: github_document
 date: December 3, 2024
 author: Nela Riddle
 ---
