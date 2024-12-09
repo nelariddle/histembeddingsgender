@@ -3,11 +3,37 @@ Tran_Riddle_Historical Embeddings
 Nela Riddle
 December 3, 2024
 
-    ## Warning: package 'corrplot' was built under R version 4.3.3
+``` r
+## Load in data ----
+## Set WD to word stimuli
+setwd("wordstim")
 
-    ## Warning: package 'reticulate' was built under R version 4.3.3
+# Specific group examples and new lists
+groupwrds <- read.csv("groupstimlists.csv", header = FALSE)
+groupwrds <- as.data.frame(t(groupwrds))
+colnames(groupwrds) <- as.character(groupwrds[1, ])
+groupwrds <- groupwrds[-1, ]
 
-    ## Warning: package 'sweater' was built under R version 4.3.3
+## List of traits
+agenticlist <- read.delim("agentic.txt", header = FALSE)
+colnames(agenticlist) <- "agentic"
+agentic <- as.vector(agenticlist$agentic)
+
+## List of jobs
+communallist <- read.delim("communal.txt", header = FALSE)
+colnames(communallist) <- "communal"
+communal <- as.vector(communallist$communal)
+
+## List of traits
+traitlist <- read.delim("traitlist.txt", header = FALSE)
+colnames(traitlist) <- "trait"
+trait <- as.vector(traitlist$trait)
+
+## List of traits
+joblist <- read.delim("joblist.txt", header = FALSE)
+colnames(joblist) <- "job"
+job <- as.vector(joblist$job)
+```
 
 ``` r
 plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
