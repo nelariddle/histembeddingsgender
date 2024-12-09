@@ -370,6 +370,38 @@ print(results_df)
     ## 20          0.11913105          0.03927364            0.03128763
 
 ``` r
+ggplot(results_df, aes(x = year)) +
+  geom_line(aes(y = communal_engall_men, color = "Men")) +
+  geom_line(aes(y = communal_engall_women, color = "Women")) +
+  labs(
+    title = "Communal, engall",
+    x = "Year",
+    y = "Mean Values",
+    color = "Group"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("Men" = "blue", "Women" = "red"))
+```
+
+![](histembeddingsGender_files/figure-gfm/getMagnitudes-1.png)<!-- -->
+
+``` r
+ggplot(results_df, aes(x = year)) +
+  geom_line(aes(y = agentic_engall_men, color = "Men")) +
+  geom_line(aes(y = agentic_engall_women, color = "Women")) +
+  labs(
+    title = "Agentic, engall",
+    x = "Year",
+    y = "Mean Values",
+    color = "Group"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("Men" = "blue", "Women" = "red"))
+```
+
+![](histembeddingsGender_files/figure-gfm/getMagnitudes-2.png)<!-- -->
+
+``` r
 plot_one_ts(get_ts("nonhuman", "women", "trait", "coha"))
 ```
 
@@ -416,6 +448,13 @@ plot_multiple_ts(men_women_trait_job_ts)
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-3.png)<!-- -->
+
+``` r
+men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"), get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"))
+plot_multiple_ts(men_women_trait_job_ts)
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-4.png)<!-- -->
 
 ``` r
 # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))

@@ -360,7 +360,29 @@ colnames(results_df) <- c(
 
 # Display the results
 print(results_df)
+ggplot(results_df, aes(x = year)) +
+  geom_line(aes(y = communal_engall_men, color = "Men")) +
+  geom_line(aes(y = communal_engall_women, color = "Women")) +
+  labs(
+    title = "Communal, engall",
+    x = "Year",
+    y = "Mean Values",
+    color = "Group"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("Men" = "blue", "Women" = "red"))
 
+ggplot(results_df, aes(x = year)) +
+  geom_line(aes(y = agentic_engall_men, color = "Men")) +
+  geom_line(aes(y = agentic_engall_women, color = "Women")) +
+  labs(
+    title = "Agentic, engall",
+    x = "Year",
+    y = "Mean Values",
+    color = "Group"
+  ) +
+  theme_minimal() +
+  scale_color_manual(values = c("Men" = "blue", "Women" = "red"))
 ```
 
 ```{r plottingTsHumanNonhuman}
@@ -379,6 +401,9 @@ plot_one_ts(get_ts("men", "women", "trait", "coha"))
 plot_one_ts(get_ts("men", "women", "job", "coha"))
 
 men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("men", "women", "job", "coha"), get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "job", "engall"))
+plot_multiple_ts(men_women_trait_job_ts)
+
+men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"), get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"))
 plot_multiple_ts(men_women_trait_job_ts)
 
 # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
