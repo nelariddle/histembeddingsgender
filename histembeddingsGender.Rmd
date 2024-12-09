@@ -31,7 +31,7 @@ if (!require("sweater")) {install.packages("sweater");require(sweater)}
 # see: https://rdrr.io/github/chainsawriot/sweater/f/README.md
 ```
 
-```{r loadWords, include=FALSE}
+```{r loadWords, include=TRUE}
 ## Load in data ----
 ## Set WD to word stimuli
 setwd("wordstim")
