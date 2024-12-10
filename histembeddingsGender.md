@@ -8,40 +8,48 @@ December 3, 2024
 ## Set WD to word stimuli
 setwd("wordstim")
 
-# Specific group examples and new lists
+# Function to read and process lists
+read_list <- function(file, col_name) {
+  list_data <- read.delim(file, header = FALSE)
+  colnames(list_data) <- col_name
+  return(as.vector(list_data[[col_name]]))
+}
+
+# Specific groups (men, women)
 groupwrds <- read.csv("groupstimlists.csv", header = FALSE)
 groupwrds <- as.data.frame(t(groupwrds))
 colnames(groupwrds) <- as.character(groupwrds[1, ])
 groupwrds <- groupwrds[-1, ]
 
-## List of traits
-agenticlist <- read.delim("agentic.txt", header = FALSE)
-colnames(agenticlist) <- "agentic"
-agentic <- as.vector(agenticlist$agentic)
+# Read lists using the function
+agentic <- read_list("agentic.txt", "agentic")
+communal <- read_list("communal.txt", "communal")
+trait <- read_list("traitlist.txt", "trait")
+job <- read_list("joblist.txt", "job")
 
-## List of jobs
-communallist <- read.delim("communal.txt", header = FALSE)
-colnames(communallist) <- "communal"
-communal <- as.vector(communallist$communal)
-
-## List of traits
-traitlist <- read.delim("traitlist.txt", header = FALSE)
-colnames(traitlist) <- "trait"
-trait <- as.vector(traitlist$trait)
-
-## List of traits
-joblist <- read.delim("joblist.txt", header = FALSE)
-colnames(joblist) <- "job"
-job <- as.vector(joblist$job)
+print(head(agentic))
 ```
+
+    ## [1] "able"           "accomplish"     "accomplishment" "accuracy"      
+    ## [5] "accurate"       "achieve"
 
 ``` r
-plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
+print(groupwrds$men)
 ```
 
-    ## Warning: Removed 57 rows containing missing values (`geom_point()`).
+    ##  [1] "men"         "man"         "male"        "males"       "masculine"  
+    ##  [6] "masculinity" "he"          "him"         "his"         "himself"    
+    ## [11] "mr"          "mister"      "boy"         "boys"        "guy"        
+    ## [16] "guys"        "fella"       "fellas"      "gent"        "gents"      
+    ## [21] "sir"         "sirs"        "bloke"       "blokes"      "gentleman"  
+    ## [26] "gentlemen"   "lad"         "lads"        "prince"      "princes"    
+    ## [31] "manly"       "king"        "kings"       ""            ""
 
-    ## Warning: Removed 57 rows containing missing values (`geom_text()`).
+``` r
+plot_one_decade(get_decade("men", "women", "agentic", "coha", 1800))
+```
+
+    ## `geom_smooth()` using formula = 'y ~ x'
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-1.png)<!-- -->
 
@@ -49,9 +57,7 @@ plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
 ```
 
-    ## Warning: Removed 1 rows containing missing values (`geom_point()`).
-
-    ## Warning: Removed 1 rows containing missing values (`geom_text()`).
+    ## `geom_smooth()` using formula = 'y ~ x'
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-2.png)<!-- -->
 
@@ -59,15 +65,15 @@ plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
 plot_one_decade(get_decade("men", "women", "communal", "engall", 1800))
 ```
 
-    ## Warning: Removed 93 rows containing missing values (`geom_point()`).
-
-    ## Warning: Removed 93 rows containing missing values (`geom_text()`).
+    ## `geom_smooth()` using formula = 'y ~ x'
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-3.png)<!-- -->
 
 ``` r
 plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
 ```
+
+    ## `geom_smooth()` using formula = 'y ~ x'
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-4.png)<!-- -->
 
@@ -326,48 +332,69 @@ colnames(results_df) <- c(
 print(results_df)
 ```
 
-    ##    year agentic_coha_men agentic_coha_women agentic_engall_men agentic_engall_women communal_coha_men
-    ## 1  1800      0.084520244       0.1834998786        0.017776823         -0.010094393        0.06831522
-    ## 2  1810      0.036986220       0.0403678799        0.013167537         -0.003991037        0.07094547
-    ## 3  1820      0.017284895      -0.0044068025        0.004411563         -0.013642225        0.04259423
-    ## 4  1830      0.001474853       0.0003878655        0.008945463         -0.010915581        0.02332175
-    ## 5  1840      0.018157545      -0.0073481485        0.003948094         -0.018247837        0.03831833
-    ## 6  1850      0.001449928      -0.0022702158        0.011462237         -0.006627975        0.02434804
-    ## 7  1860      0.022906022      -0.0126401864        0.012631418         -0.012494853        0.04691636
-    ## 8  1870      0.023492385      -0.0030534677        0.014424021         -0.010645491        0.04825870
-    ## 9  1880      0.029276455      -0.0018925372        0.015541094         -0.009744451        0.05070012
-    ## 10 1890      0.045164065       0.0407958010        0.011824326         -0.006846959        0.06307972
-    ## 11 1900      0.047460166       0.0449100188        0.016932356         -0.010041242        0.06972313
-    ## 12 1910      0.048764028       0.0311070938        0.011144014         -0.006272388        0.07639868
-    ## 13 1920      0.050883157       0.0409740162        0.011922415         -0.011133050        0.07874893
-    ## 14 1930      0.055722354       0.0549758360        0.010657838         -0.010304977        0.07841097
-    ## 15 1940      0.041074543       0.0371632802        0.016404601         -0.008795346        0.06771565
-    ## 16 1950      0.040904315       0.0533711343        0.016927671         -0.004900174        0.06910422
-    ## 17 1960      0.069172537       0.0595801712        0.020153685         -0.003272957        0.08933305
-    ## 18 1970      0.077888404       0.0734545124        0.024377910          0.002779682        0.09297614
-    ## 19 1980      0.065539308       0.0927835596        0.022926163          0.004748982        0.09342222
-    ## 20 1990      0.113000601       0.0928455471        0.023448633          0.002629157        0.12533895
-    ##    communal_coha_women communal_engall_men communal_engall_women
-    ## 1           0.26509634          0.04729696            0.05682278
-    ## 2           0.09461830          0.02876524            0.03346980
-    ## 3           0.04840895          0.02134274            0.02548101
-    ## 4           0.04915821          0.02214370            0.02463863
-    ## 5           0.04037932          0.02298446            0.02271996
-    ## 6           0.04714489          0.02781557            0.02731800
-    ## 7           0.03207279          0.02489244            0.02648915
-    ## 8           0.04226237          0.02409834            0.02796862
-    ## 9           0.04076931          0.02816929            0.02923253
-    ## 10          0.08085304          0.02495898            0.02713827
-    ## 11          0.07941852          0.03273924            0.02679150
-    ## 12          0.06525074          0.02976279            0.02946129
-    ## 13          0.08073349          0.03008241            0.02647452
-    ## 14          0.08899034          0.03188849            0.02503512
-    ## 15          0.07719392          0.03777427            0.03147545
-    ## 16          0.09609614          0.03789944            0.03419810
-    ## 17          0.09344271          0.04470092            0.03630398
-    ## 18          0.09949782          0.04489457            0.03850274
-    ## 19          0.13549703          0.04334782            0.03667643
-    ## 20          0.11913105          0.03927364            0.03128763
+    ##    year agentic_coha_men agentic_coha_women agentic_engall_men
+    ## 1  1800      0.084520244       0.1834998786        0.017776823
+    ## 2  1810      0.036986220       0.0403678799        0.013167537
+    ## 3  1820      0.017284895      -0.0044068025        0.004411563
+    ## 4  1830      0.001474853       0.0003878655        0.008945463
+    ## 5  1840      0.018157545      -0.0073481485        0.003948094
+    ## 6  1850      0.001449928      -0.0022702158        0.011462237
+    ## 7  1860      0.022906022      -0.0126401864        0.012631418
+    ## 8  1870      0.023492385      -0.0030534677        0.014424021
+    ## 9  1880      0.029276455      -0.0018925372        0.015541094
+    ## 10 1890      0.045164065       0.0407958010        0.011824326
+    ## 11 1900      0.047460166       0.0449100188        0.016932356
+    ## 12 1910      0.048764028       0.0311070938        0.011144014
+    ## 13 1920      0.050883157       0.0409740162        0.011922415
+    ## 14 1930      0.055722354       0.0549758360        0.010657838
+    ## 15 1940      0.041074543       0.0371632802        0.016404601
+    ## 16 1950      0.040904315       0.0533711343        0.016927671
+    ## 17 1960      0.069172537       0.0595801712        0.020153685
+    ## 18 1970      0.077888404       0.0734545124        0.024377910
+    ## 19 1980      0.065539308       0.0927835596        0.022926163
+    ## 20 1990      0.113000601       0.0928455471        0.023448633
+    ##    agentic_engall_women communal_coha_men communal_coha_women
+    ## 1          -0.010094393        0.06831522          0.26509634
+    ## 2          -0.003991037        0.07094547          0.09461830
+    ## 3          -0.013642225        0.04259423          0.04840895
+    ## 4          -0.010915581        0.02332175          0.04915821
+    ## 5          -0.018247837        0.03831833          0.04037932
+    ## 6          -0.006627975        0.02434804          0.04714489
+    ## 7          -0.012494853        0.04691636          0.03207279
+    ## 8          -0.010645491        0.04825870          0.04226237
+    ## 9          -0.009744451        0.05070012          0.04076931
+    ## 10         -0.006846959        0.06307972          0.08085304
+    ## 11         -0.010041242        0.06972313          0.07941852
+    ## 12         -0.006272388        0.07639868          0.06525074
+    ## 13         -0.011133050        0.07874893          0.08073349
+    ## 14         -0.010304977        0.07841097          0.08899034
+    ## 15         -0.008795346        0.06771565          0.07719392
+    ## 16         -0.004900174        0.06910422          0.09609614
+    ## 17         -0.003272957        0.08933305          0.09344271
+    ## 18          0.002779682        0.09297614          0.09949782
+    ## 19          0.004748982        0.09342222          0.13549703
+    ## 20          0.002629157        0.12533895          0.11913105
+    ##    communal_engall_men communal_engall_women
+    ## 1           0.04729696            0.05682278
+    ## 2           0.02876524            0.03346980
+    ## 3           0.02134274            0.02548101
+    ## 4           0.02214370            0.02463863
+    ## 5           0.02298446            0.02271996
+    ## 6           0.02781557            0.02731800
+    ## 7           0.02489244            0.02648915
+    ## 8           0.02409834            0.02796862
+    ## 9           0.02816929            0.02923253
+    ## 10          0.02495898            0.02713827
+    ## 11          0.03273924            0.02679150
+    ## 12          0.02976279            0.02946129
+    ## 13          0.03008241            0.02647452
+    ## 14          0.03188849            0.02503512
+    ## 15          0.03777427            0.03147545
+    ## 16          0.03789944            0.03419810
+    ## 17          0.04470092            0.03630398
+    ## 18          0.04489457            0.03850274
+    ## 19          0.04334782            0.03667643
+    ## 20          0.03927364            0.03128763
 
 ``` r
 ggplot(results_df, aes(x = year)) +
@@ -424,6 +451,10 @@ plot_multiple_ts(human_nonhuman_ts)
 plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
 ```
 
+    ## `geom_smooth()` using formula = 'y ~ x'
+
+    ## Warning: Removed 17 rows containing non-finite values (`stat_smooth()`).
+
     ## Warning: Removed 17 rows containing missing values (`geom_point()`).
 
     ## Warning: Removed 17 rows containing missing values (`geom_text()`).
@@ -450,7 +481,7 @@ plot_multiple_ts(men_women_trait_job_ts)
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-3.png)<!-- -->
 
 ``` r
-men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"), get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"))
+men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"),get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"))
 plot_multiple_ts(men_women_trait_job_ts)
 ```
 

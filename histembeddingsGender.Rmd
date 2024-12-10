@@ -5,7 +5,7 @@ date: December 3, 2024
 author: Nela Riddle
 ---
   
-```{r loadPackages, echo = FALSE, message=FALSE}
+```{r loadPackages, echo = FALSE, message=FALSE, warning=FALSE}
 ########################################################
 
 ## What are the historical patterns of social group representations?
@@ -29,36 +29,33 @@ if (!require("sweater")) {install.packages("sweater");require(sweater)}
 # see: https://rdrr.io/github/chainsawriot/sweater/f/README.md
 ```
 
-```{r loadWords, include=TRUE}
+```{r loadWords, include=TRUE, warning=FALSE}
 ## Load in data ----
 ## Set WD to word stimuli
 setwd("wordstim")
 
-# Specific group examples and new lists
+# Function to read and process lists
+read_list <- function(file, col_name) {
+  list_data <- read.delim(file, header = FALSE)
+  colnames(list_data) <- col_name
+  return(as.vector(list_data[[col_name]]))
+}
+
+# Specific groups (men, women)
 groupwrds <- read.csv("groupstimlists.csv", header = FALSE)
 groupwrds <- as.data.frame(t(groupwrds))
 colnames(groupwrds) <- as.character(groupwrds[1, ])
 groupwrds <- groupwrds[-1, ]
 
-## List of traits
-agenticlist <- read.delim("agentic.txt", header = FALSE)
-colnames(agenticlist) <- "agentic"
-agentic <- as.vector(agenticlist$agentic)
+# Read lists using the function
+agentic <- read_list("agentic.txt", "agentic")
+communal <- read_list("communal.txt", "communal")
+trait <- read_list("traitlist.txt", "trait")
+job <- read_list("joblist.txt", "job")
 
-## List of jobs
-communallist <- read.delim("communal.txt", header = FALSE)
-colnames(communallist) <- "communal"
-communal <- as.vector(communallist$communal)
+print(head(agentic))
 
-## List of traits
-traitlist <- read.delim("traitlist.txt", header = FALSE)
-colnames(traitlist) <- "trait"
-trait <- as.vector(traitlist$trait)
-
-## List of traits
-joblist <- read.delim("joblist.txt", header = FALSE)
-colnames(joblist) <- "job"
-job <- as.vector(joblist$job)
+print(groupwrds$men)
 ```
 
 
@@ -220,7 +217,7 @@ decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
 decade2 <- get_decade("men", "women", "agentic", "coha", 1800)
 ```
 
-```{r makePlotsRevised, echo=FALSE, message=FALSE}
+```{r makePlotsRevised, echo=FALSE, message=FALSE, warning=FALSE}
 library(ggplot2)
 
 plot_one_ts <-
@@ -276,34 +273,103 @@ plot_multiple_ts <- function(ts_list) {
 
 
 
-plot_one_decade <-
-  function(decade_data) {
-    group1 <- attr(decade_data, "group1index")
-    group2 <- attr(decade_data, "group2index")
-    word_term <- attr(decade_data, "wordterms")
-    corpus <- attr(decade_data, "corpus")
-    decade <- attr(decade_data, "decade")
-    title <-
-      paste(group1, "vs", group2, ",", word_term, "(", corpus, ",", decade, ")")
-    p <- ggplot(decade_data, aes(x = grp1ef, y = grp2ef)) +
-      geom_point(color = "blue") + geom_text(aes(label = trait), vjust = -0.5, size = 3) +
-      labs(title = title, x = group1, y = group2) +
-      theme_minimal()
-    
-    return(p)
-  }
+plot_one_decade <- function(decade_data) {
+  # Extract attributes
+  group1 <- attr(decade_data, "group1index")
+  group2 <- attr(decade_data, "group2index")
+  word_term <- attr(decade_data, "wordterms")
+  corpus <- attr(decade_data, "corpus")
+  decade <- attr(decade_data, "decade")
+  
+  # Calculate Pearson correlation
+  pearson_corr <- cor(decade_data$grp1ef, decade_data$grp2ef, use = "complete.obs")
+  
+  # Create title
+  title <- paste0(
+    group1, " vs ", group2, ", ", word_term, 
+    " (", corpus, ", ", decade, ", r = ", round(pearson_corr, 2), ")"
+  )
+  
+  # Create plot
+  p <- ggplot(decade_data, aes(x = grp1ef, y = grp2ef)) +
+    geom_point(color = "blue") + geom_smooth(method="lm")+
+    geom_text(aes(label = trait), vjust = -0.5, size = 3) +
+    labs(title = title, x = group1, y = group2) +
+    theme_minimal()
+  
+  return(p)
+}
+
 ```
 
-```{r plottingDecade}
+```{r plottingDecade, warning=FALSE}
 
-plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
+plot_one_decade(get_decade("men", "women", "agentic", "coha", 1800))
+plot_one_decade(get_decade("men", "women", "communal", "coha", 1800))
+
+plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
+plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
+
 plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
 
 plot_one_decade(get_decade("men", "women", "communal", "engall", 1800))
 plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
 
-print(get_decade("men", "women", "agentic", "engall", 1990))
+head(get_decade("men", "women", "agentic", "engall", 1990))
 ```
+```{r propMissing}
+# How many group words are missing by decade?
+groupmiss_coha <- as.data.frame(matrix(nrow = length(wordvecs.dat_coha), ncol = dim(groupwrds)[2]))
+colnames(groupmiss_coha) <- colnames(groupwrds)
+
+for (j in 1:dim(groupwrds)[2]){
+  for (i in 1:length(wordvecs.dat_coha)){
+    groupmiss_coha[i,j] <- length(groupwrds[,j][groupwrds[,j] %in% unavwords_coha[[i]]])
+  }}
+
+# How many group words are there available?
+for (i in 1:dim(groupwrds)[2]){
+  groupmiss_coha[21,i] <- as.numeric(table(groupwrds[,i] == "")[1])
+}
+
+groupmiss2_coha <- as.data.frame(matrix(nrow = length(wordvecs.dat_coha), ncol = dim(groupwrds)[2]))
+colnames(groupmiss2_coha) <- colnames(groupwrds)
+
+for (j in 1:dim(groupmiss_coha)[2]){
+  for (i in 1:20){
+    groupmiss2_coha[i,j] <- 1 - (groupmiss_coha[i,j]/groupmiss_coha[21,j])
+  }}
+
+# Create a sequence for the x-axis (1820 to 2010, every 10 years)
+years <- seq(1820, 2010, by = 10)
+
+# Ensure the length of the data matches the length of `years`
+# Assuming `men` and `women` are columns in groupmiss2_coha
+groupmiss2_coha$year <- years
+
+head(groupmiss2_coha)
+```
+```{r plotMissing}
+# Create the plot
+ggplot(groupmiss2_coha, aes(x = year)) +
+  geom_line(aes(y = men, color = "Men")) +
+  geom_line(aes(y = women, color = "Women")) +
+  scale_color_manual(values = c("Men" = "blue", "Women" = "red")) +
+  labs(title = "prop. group words available over time",
+       x = "Years",
+       y = "Values",
+       color = "Legend") +
+  theme_minimal()
+```
+
+```{r outliersMissing}
+# Values above or below 3 standard deviations from the mean
+outliers_men <- groupmiss2_coha$men[abs(groupmiss2_coha$men - mean(groupmiss2_coha$men, na.rm = TRUE)) > 3 * sd(groupmiss2_coha$men, na.rm = TRUE)]
+outliers_women <- groupmiss2_coha$women[abs(groupmiss2_coha$women - mean(groupmiss2_coha$women, na.rm = TRUE)) > 3 * sd(groupmiss2_coha$women, na.rm = TRUE)]
+outliers_men
+outliers_women
+```
+
 
 ```{r getMagnitudes}
 # Initialize an empty data frame to store results
