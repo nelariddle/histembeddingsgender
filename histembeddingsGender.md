@@ -3,6 +3,9 @@ Tran_Riddle_Historical Embeddings
 Nela Riddle
 December 3, 2024
 
+First, load in the pre-written group and word lists to be used in
+analyses:
+
 ``` r
 ## Load in data ----
 ## Set WD to word stimuli
@@ -26,24 +29,72 @@ agentic <- read_list("agentic.txt", "agentic")
 communal <- read_list("communal.txt", "communal")
 trait <- read_list("traitlist.txt", "trait")
 job <- read_list("joblist.txt", "job")
+```
 
-print(head(agentic))
+The agentic and communal lists were borrowed from
+<https://onlinelibrary.wiley.com/doi/10.1002/ejsp.2561>; here are some
+examples
+
+``` r
+head(agentic)
 ```
 
     ## [1] "able"           "accomplish"     "accomplishment" "accuracy"      
     ## [5] "accurate"       "achieve"
 
 ``` r
-print(groupwrds$men)
+head(communal)
 ```
 
-    ##  [1] "men"         "man"         "male"        "males"       "masculine"  
-    ##  [6] "masculinity" "he"          "him"         "his"         "himself"    
-    ## [11] "mr"          "mister"      "boy"         "boys"        "guy"        
-    ## [16] "guys"        "fella"       "fellas"      "gent"        "gents"      
-    ## [21] "sir"         "sirs"        "bloke"       "blokes"      "gentleman"  
-    ## [26] "gentlemen"   "lad"         "lads"        "prince"      "princes"    
-    ## [31] "manly"       "king"        "kings"       ""            ""
+    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"  
+    ## [5] "accommodation" "accompany"
+
+The group word lists were taken from
+<https://pubmed.ncbi.nlm.nih.gov/35787033/>, as well as the trait list:
+
+``` r
+head(groupwrds$men)
+```
+
+    ## [1] "men"         "man"         "male"        "males"       "masculine"  
+    ## [6] "masculinity"
+
+``` r
+head(groupwrds$women)
+```
+
+    ## [1] "women"      "woman"      "female"     "females"    "feminine"  
+    ## [6] "femininity"
+
+``` r
+head(trait)
+```
+
+    ## [1] "able"          "abrupt"        "absentminded"  "abusive"      
+    ## [5] "accommodating" "accurate"
+
+The job titles were scraped off this site:
+<https://spotterful.com/blog/job-description-template/job-titles-list-a-z>,
+and expanded through nearest neighbors
+
+    ## [1] "accompanist"   "accountant"    "actuary"       "actor"        
+    ## [5] "acupuncturist" "adjudicator"
+
+    ## Time Series:
+    ## Start = 1800 
+    ## End = 1990 
+    ## Frequency = 0.1 
+    ##  [1] 0.7608427 0.7966443 0.7896832 0.7644530 0.7750871 0.7651039 0.8071249
+    ##  [8] 0.8114075 0.8431184 0.8339931 0.8811296 0.9010926 0.8905408 0.8967956
+    ## [15] 0.9144132 0.9225972 0.9146059 0.9262760 0.9288815 0.9324082
+    ## attr(,"group1index")
+    ## [1] men
+    ## attr(,"group2index")
+    ## [1] women
+    ## attr(,"wordterms")
+    ## [1] agentic
+    ## attr(,"corpus")
+    ## [1] engall
 
 ``` r
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1800))
@@ -62,7 +113,7 @@ plot_one_decade(get_decade("men", "women", "communal", "coha", 1800))
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-2.png)<!-- -->
 
 ``` r
-plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
+plot_one_decade(get_decade("nonhuman", "human", "agentic", "engall", 1990))
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
@@ -70,7 +121,7 @@ plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-3.png)<!-- -->
 
 ``` r
-plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
+plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
@@ -78,7 +129,7 @@ plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-4.png)<!-- -->
 
 ``` r
-plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
+plot_one_decade(get_decade("men", "women", "communal", "engall", 1800))
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
@@ -86,20 +137,12 @@ plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-5.png)<!-- -->
 
 ``` r
-plot_one_decade(get_decade("men", "women", "communal", "engall", 1800))
-```
-
-    ## `geom_smooth()` using formula = 'y ~ x'
-
-![](histembeddingsGender_files/figure-gfm/plottingDecade-6.png)<!-- -->
-
-``` r
 plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](histembeddingsGender_files/figure-gfm/plottingDecade-7.png)<!-- -->
+![](histembeddingsGender_files/figure-gfm/plottingDecade-6.png)<!-- -->
 
 ``` r
 head(get_decade("men", "women", "agentic", "engall", 1990))

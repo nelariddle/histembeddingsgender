@@ -29,6 +29,7 @@ if (!require("sweater")) {install.packages("sweater");require(sweater)}
 # see: https://rdrr.io/github/chainsawriot/sweater/f/README.md
 ```
 
+First, load in the pre-written group and word lists to be used in analyses:
 ```{r loadWords, include=TRUE, warning=FALSE}
 ## Load in data ----
 ## Set WD to word stimuli
@@ -52,10 +53,29 @@ agentic <- read_list("agentic.txt", "agentic")
 communal <- read_list("communal.txt", "communal")
 trait <- read_list("traitlist.txt", "trait")
 job <- read_list("joblist.txt", "job")
+fruit <- read_list("fruit.txt", "fruit")
+noun <- read_list("nouns.txt", "noun")
+common <- read_list("common.txt", "common")
 
-print(head(agentic))
 
-print(groupwrds$men)
+```
+The agentic and communal lists were borrowed from https://onlinelibrary.wiley.com/doi/10.1002/ejsp.2561; here are some examples
+```{r wordExamples}
+
+head(agentic)
+head(communal)
+
+```
+
+The group word lists were taken from https://pubmed.ncbi.nlm.nih.gov/35787033/, as well as the trait list:
+```{r groupExamples}
+head(groupwrds$men)
+head(groupwrds$women)
+head(trait)
+```
+The job titles were scraped off this site: https://spotterful.com/blog/job-description-template/job-titles-list-a-z, and expanded through nearest neighbors
+```{r jobExamples, echo=FALSE, message=FALSE}
+head(job)
 ```
 
 
@@ -85,14 +105,19 @@ for (i in 1:length(wordvecs.dat_coha)) {
     length(wordvecs.dat_coha[[i]]$V1) - length(unavwords_coha[[i]])
 }
 ```
-
+The workhorse function; it iterates over each decade, computing the MAC score between each word and each group, then finds the Pearson correlation of the resulting lists (demonstrated visually later)
 ```{r importantFunction, echo=FALSE, message=FALSE}
 grpwrdassoc_rel <-
   function(group1index,
            group2index,
            wordterms,
            wordvecs.dat = wordvecs.dat,
-           unavwords = unavwords) {
+           unavwords = unavwords,
+           corpus) {
+    
+    start_year <- if (corpus=="coha") 1820 else 1800
+    end_year <- if (corpus=="coha") 2010 else 1990
+    
     # Create lists of the group's available words
     availwrds_decade_group1 <- list()
     availwrds_decade_group2 <- list()
@@ -124,8 +149,8 @@ grpwrdassoc_rel <-
       cor_group1_2ts <-
         ts(
           cor_group1_2ts,
-          start = 1800,
-          end = 1990,
+          start = start_year,
+          end = end_year,
           frequency = 1 / 10
         )
       print(i)
@@ -162,16 +187,17 @@ generate_data <- function(group1index,
       group2index = group2index,
       wordterms = get(wordterms),
       wordvecs.dat = wordvecs.dat_selected,
-      unavwords = unavwords_selected
+      unavwords = unavwords_selected,
+      corpus=corpus
     )
     
     if (!dir.exists("outputs")) {
-      dir.create("outputs")  # Create the outputs directory if it doesn't exist
+      dir.create("outputs")
     }
-    save(output, file = file_path)  # Save the newly created object
+    save(output, file = file_path)
   }
   
-  return(output)  # Return the output object
+  return(output)
 }
 get_data_internal <- function(group1index,
                               group2index,
@@ -187,7 +213,11 @@ get_data_internal <- function(group1index,
   if (is.null(decade)) {
     output <- data[[2]]
   } else {
-    output <- data[[1]][[(decade - 1790) / 10]]
+    if(corpus=="coha"){
+      output <- data[[1]][[(decade - 1810) / 10]]
+    }else{
+      output <- data[[1]][[(decade - 1790) / 10]]
+    }
     attr(output, "decade") <- decade
   }
   attr(output, "group1index") <- group1index
@@ -212,9 +242,21 @@ get_decade <-
     get_data_internal(group1index, group2index, wordterms, corpus, decade = decade)
   }
 ts1 <- get_ts("men", "women", "agentic", "engall")
-ts2 <- get_ts("men", "women", "agentic", "coha")
+ts2 <- get_ts("men", "women", "communal", "coha")
+ts3 <- get_ts("men", "women", "fruit", "engall")
+ts4 <- get_ts("men", "women", "noun", "coha")
+
+
 decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
-decade2 <- get_decade("men", "women", "agentic", "coha", 1800)
+decade2 <- get_decade("men", "women", "agentic", "coha", 1820)
+decade2 <- get_decade("men", "women", "noun", "coha", 2010)
+
+
+ts1
+ts2
+ts4
+
+decade2
 ```
 
 ```{r makePlotsRevised, echo=FALSE, message=FALSE, warning=FALSE}
@@ -304,16 +346,10 @@ plot_one_decade <- function(decade_data) {
 
 ```{r plottingDecade, warning=FALSE}
 
-plot_one_decade(get_decade("men", "women", "agentic", "coha", 1800))
-plot_one_decade(get_decade("men", "women", "communal", "coha", 1800))
-
-plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
-
-plot_one_decade(get_decade("men", "women", "agentic", "engall", 1990))
-
-plot_one_decade(get_decade("men", "women", "communal", "engall", 1800))
 plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
+plot_one_decade(get_decade("men", "women", "common", "engall", 1800))
+
 
 head(get_decade("men", "women", "agentic", "engall", 1990))
 ```
@@ -469,7 +505,7 @@ plot_one_ts(get_ts("men", "women", "job", "coha"))
 men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("men", "women", "job", "coha"), get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "job", "engall"))
 plot_multiple_ts(men_women_trait_job_ts)
 
-men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"),get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"))
+men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"),get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"),get_ts("men", "women", "common", "engall"),get_ts("men", "women", "common", "coha"))
 plot_multiple_ts(men_women_trait_job_ts)
 
 # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
