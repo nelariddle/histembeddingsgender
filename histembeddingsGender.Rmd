@@ -161,6 +161,21 @@ grpwrdassoc_rel <-
   }
 ```
 
+```{r sanityCheck1}
+print(mac(
+  as.matrix(wordvecs.dat[[20]]),
+  S = c("cat", "puppy", "canine", "happy", "weird", "car"),
+  A = c("dog")
+)$P)
+```
+```{r sanityCheck2}
+print(mac(
+  as.matrix(wordvecs.dat[[20]]),
+  S = c("god", "bible", "lord", "banana", "french", "blond"),
+  A = c("jesus")
+)$P)
+```
+
 ```{r helperFunctions, echo = FALSE, message = FALSE}
 generate_data <- function(group1index,
                           group2index,
