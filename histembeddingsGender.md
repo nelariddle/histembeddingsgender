@@ -82,6 +82,64 @@ score between each word and each group, then finds the Pearson
 correlation of the resulting lists (demonstrated visually later)
 
 ``` r
+grpwrdassoc_rel <-
+  function(group1index,
+           group2index,
+           wordterms,
+           wordvecs.dat = wordvecs.dat,
+           unavwords = unavwords,
+           corpus) {
+    
+    start_year <- if (corpus=="coha") 1820 else 1800
+    end_year <- if (corpus=="coha") 2010 else 1990
+    
+    # Create lists of the group's available words
+    availwrds_decade_group1 <-
+      lapply(1:length(wordvecs.dat), function(i) {
+        groupwrds[, group1index][!groupwrds[, group1index] %in% unavwords[[i]]]
+      })
+    availwrds_decade_group2 <-
+      lapply(1:length(wordvecs.dat), function(i) {
+        groupwrds[, group2index][!groupwrds[, group2index] %in% unavwords[[i]]]
+      })
+    
+    
+    # Now compute MAC from available words for each decade
+    wordvecs.mat <- list()
+    mac_group1_2list <- list()
+    cor_group1_2 <- list()
+    cor_group1_2ts <- vector()
+    for (i in 1:length(wordvecs.dat)) {
+      wordvecs.mat[[i]] <- as.matrix(wordvecs.dat[[i]])
+      mac_group1_2list[[i]] <-
+        data.frame(
+          grp1ef = mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group1[[i]])$P,
+          grp2ef = mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group2[[i]])$P,
+          trait = names(
+            mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group1[[i]])$P
+          )
+        )
+      cor_group1_2[[i]] <-
+        cor.test(mac_group1_2list[[i]]$grp2ef, mac_group1_2list[[i]]$grp1ef)
+      cor_group1_2ts[i] <- cor_group1_2[[i]]$estimate
+      cor_group1_2ts <-
+        ts(
+          cor_group1_2ts,
+          start = start_year,
+          end = end_year,
+          frequency = 1 / 10
+        )
+      print(i)
+    }
+    output_rel <- list(mac_group1_2list,
+                       cor_group1_2ts)
+    return(output_rel)
+  }
+```
+
+Demonstrating the mac function in fact works
+
+``` r
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
   S = c("cat", "puppy", "canine", "happy", "weird", "car"),
@@ -355,12 +413,6 @@ generate_trait_corpus_plot <- function(data, trait, corpus) {
 
 generate_trait_corpus_plot(results_df, "communal", "coha")
 ```
-
-    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
-    ## ℹ Please use tidy evaluation idioms with `aes()`.
-    ## ℹ See also `vignette("ggplot2-in-packages")` for more information.
-    ## This warning is displayed once every 8 hours.
-    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.
 
     ## Warning: Removed 2 rows containing missing values (`geom_line()`).
     ## Removed 2 rows containing missing values (`geom_line()`).
