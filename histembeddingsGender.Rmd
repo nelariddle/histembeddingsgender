@@ -97,7 +97,7 @@ n_avwords_coha <- sapply(wordvecs.dat_coha, function(x)
 )
 ```
 The workhorse function; it iterates over each decade, computing the MAC score between each word and each group, then finds the Pearson correlation of the resulting lists (demonstrated visually later)
-```{r importantFunction, echo=FALSE, message=FALSE}
+```{r importantFunction, message=FALSE}
 grpwrdassoc_rel <-
   function(group1index,
            group2index,
@@ -152,7 +152,7 @@ grpwrdassoc_rel <-
     return(output_rel)
   }
 ```
-
+Demonstrating the mac function in fact works
 ```{r sanityCheck1}
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
