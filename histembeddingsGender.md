@@ -161,6 +161,22 @@ print(mac(
     ##         god       bible        lord      banana      french       blond 
     ##  0.55230813  0.32821543  0.50016478 -0.06574848  0.03215507  0.03632459
 
+``` r
+ts1 <- get_ts("men", "women", "agentic", "engall")
+ts2 <- get_ts("men", "women", "communal", "coha")
+ts3 <- get_ts("men", "women", "noun", "coha")
+ts4 <- get_ts("nonhuman", "women", "noun", "coha")
+
+
+
+decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
+decade2 <- get_decade("men", "women", "agentic", "coha", 1820)
+decade2 <- get_decade("men", "women", "noun", "coha", 2010)
+
+
+ts4
+```
+
     ## Time Series:
     ## Start = 1820 
     ## End = 2010 
@@ -176,57 +192,17 @@ print(mac(
     ## attr(,"corpus")
     ## [1] coha
 
-    ##                 grp1ef       grp2ef    trait
-    ## apple    -0.0175141881  0.012216518    apple
-    ## bridge    0.0219305368 -0.020148409   bridge
-    ## car       0.0220909291 -0.005440041      car
-    ## dream     0.0667966968  0.081342743    dream
-    ## elephant  0.2312207941  0.213757766 elephant
-    ## forest   -0.0078725570  0.006766126   forest
-    ## garden   -0.0530657606  0.054511087   garden
-    ## house    -0.0192488666  0.024736192    house
-    ## island    0.0008567316  0.042285972   island
-    ## jacket    0.1052850273  0.063152146   jacket
-    ## key      -0.0159210243 -0.025462033      key
-    ## lamp      0.0184488993  0.054662164     lamp
-    ## mountain  0.0389751978  0.031631657 mountain
-    ## notebook  0.1672584803  0.168067874 notebook
-    ## ocean    -0.0280244380 -0.012584872    ocean
-    ## pencil    0.1914772436  0.194880300   pencil
-    ## queen     0.1241449175  0.258921486    queen
-    ## river     0.0190086921 -0.001780772    river
-    ## sun      -0.0147225168  0.008250374      sun
-    ## tree      0.0238232460  0.036017161     tree
-    ## umbrella  0.1758348031  0.203902068 umbrella
-    ## village   0.0391640480  0.093909121  village
-    ## window    0.0233733214  0.030247392   window
-    ## yacht     0.1970494170  0.162671996    yacht
-    ## zebra              NaN          NaN    zebra
-    ## arrow     0.2020074942  0.148782030    arrow
-    ## balloon   0.1860049711  0.176078672  balloon
-    ## castle    0.1051304568  0.112649808   castle
-    ## diamond   0.0594390996  0.103904600  diamond
-    ## eagle     0.2213715984  0.190353974    eagle
-    ## feather   0.2099160151  0.217230310  feather
-    ## guitar    0.2002663570  0.168767772   guitar
-    ## hat       0.1270004640  0.099805039      hat
-    ## iceberg            NaN          NaN  iceberg
-    ## jungle    0.1979612549  0.166727272   jungle
-    ## kite               NaN          NaN     kite
-    ## ladder    0.1857369778  0.125624475   ladder
-    ## mirror    0.0226273606  0.079464282   mirror
-    ## necklace  0.1965937643  0.257320401 necklace
-    ## octopus            NaN          NaN  octopus
-    ## painting  0.0298548327  0.072060449 painting
-    ## quilt     0.1575433847  0.229595442    quilt
-    ## rocket    0.1926537562  0.126032587   rocket
-    ## statue    0.2201962058  0.213073632   statue
-    ## treasure  0.1971641660  0.205583065 treasure
-    ## universe -0.0204368589 -0.004092586 universe
-    ## violin    0.2284506788  0.206341322   violin
-    ## whistle   0.2188643517  0.170772593  whistle
-    ## yogurt    0.1476598723  0.150609206   yogurt
-    ## zipper    0.2140006263  0.199501709   zipper
+``` r
+head(decade2)
+```
+
+    ##                grp1ef       grp2ef    trait
+    ## apple    -0.017514188  0.012216518    apple
+    ## bridge    0.021930537 -0.020148409   bridge
+    ## car       0.022090929 -0.005440041      car
+    ## dream     0.066796697  0.081342743    dream
+    ## elephant  0.231220794  0.213757766 elephant
+    ## forest   -0.007872557  0.006766126   forest
 
 ``` r
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))

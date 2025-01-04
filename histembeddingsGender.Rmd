@@ -248,6 +248,9 @@ get_decade <-
            decade) {
     get_data_internal(group1index, group2index, wordterms, corpus, decade = decade)
   }
+```
+
+```{r sampleCalls}
 ts1 <- get_ts("men", "women", "agentic", "engall")
 ts2 <- get_ts("men", "women", "communal", "coha")
 ts3 <- get_ts("men", "women", "noun", "coha")
@@ -262,7 +265,7 @@ decade2 <- get_decade("men", "women", "noun", "coha", 2010)
 
 ts4
 
-decade2
+head(decade2)
 ```
 
 ```{r makePlotsRevised, echo=FALSE, message=FALSE, warning=FALSE}
