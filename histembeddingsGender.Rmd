@@ -56,8 +56,6 @@ job <- read_list("joblist.txt", "job")
 fruit <- read_list("fruit.txt", "fruit")
 noun <- read_list("nouns.txt", "noun")
 common <- read_list("common.txt", "common")
-
-
 ```
 The agentic and communal lists were borrowed from https://onlinelibrary.wiley.com/doi/10.1002/ejsp.2561; here are some examples
 ```{r wordExamples}
@@ -80,30 +78,23 @@ head(job)
 
 
 ```{r loadVectors, echo=FALSE, message=FALSE}
+# Check unavailable words by decade ----
 if (!exists("wordvecs.dat", envir = .GlobalEnv)) {
   load("engall/wordvecsdata_engall.RData", envir = .GlobalEnv)
 }
-# Check unavailable words by decade ----
-unavwords <- list()
-n_avwords <- vector()
-for (i in 1:length(wordvecs.dat)) {
-  unavwords[[i]] <-
-    rownames(wordvecs.dat[[i]])[which(wordvecs.dat[[i]]$V1 == 0)]
-  wordvecs.dat[[i]]$V1
-  n_avwords[i] <-
-    length(wordvecs.dat[[i]]$V1) - length(unavwords[[i]])
-}
+unavwords <- lapply(wordvecs.dat, function(x)
+  rownames(x)[which(x$V1 == 0)])
+n_avwords <- sapply(wordvecs.dat, function(x)
+  length(x$V1) - length(rownames(x)[which(x$V1 == 0)]))
+
 if (!exists("wordvecs.dat_coha", envir = .GlobalEnv)) {
   load("coha/wordvecsdata_coha.RData", envir = .GlobalEnv)
 }
-unavwords_coha <- list()
-n_avwords_coha <- vector()
-for (i in 1:length(wordvecs.dat_coha)) {
-  unavwords_coha[[i]] <-
-    rownames(wordvecs.dat_coha[[i]])[which(wordvecs.dat_coha[[i]]$V1 == 0)]
-  n_avwords_coha[i] <-
-    length(wordvecs.dat_coha[[i]]$V1) - length(unavwords_coha[[i]])
-}
+unavwords_coha <- lapply(wordvecs.dat_coha, function(x)
+  rownames(x)[which(x$V1 == 0)])
+n_avwords_coha <- sapply(wordvecs.dat_coha, function(x)
+  length(x$V1) - length(rownames(x)[which(x$V1 == 0)])
+)
 ```
 The workhorse function; it iterates over each decade, computing the MAC score between each word and each group, then finds the Pearson correlation of the resulting lists (demonstrated visually later)
 ```{r importantFunction, echo=FALSE, message=FALSE}
@@ -119,14 +110,15 @@ grpwrdassoc_rel <-
     end_year <- if (corpus=="coha") 2010 else 1990
     
     # Create lists of the group's available words
-    availwrds_decade_group1 <- list()
-    availwrds_decade_group2 <- list()
-    for (i in 1:length(wordvecs.dat)) {
-      availwrds_decade_group1[[i]] <-
-        groupwrds[, group1index][groupwrds[, group1index] %in% unavwords[[i]] == FALSE]
-      availwrds_decade_group2[[i]] <-
-        groupwrds[, group2index][groupwrds[, group2index] %in% unavwords[[i]] == FALSE]
-    }
+    availwrds_decade_group1 <-
+      lapply(1:length(wordvecs.dat), function(i) {
+        groupwrds[, group1index][!groupwrds[, group1index] %in% unavwords[[i]]]
+      })
+    availwrds_decade_group2 <-
+      lapply(1:length(wordvecs.dat), function(i) {
+        groupwrds[, group2index][!groupwrds[, group2index] %in% unavwords[[i]]]
+      })
+    
     
     # Now compute MAC from available words for each decade
     wordvecs.mat <- list()
@@ -203,7 +195,7 @@ generate_data <- function(group1index,
       wordterms = get(wordterms),
       wordvecs.dat = wordvecs.dat_selected,
       unavwords = unavwords_selected,
-      corpus=corpus
+      corpus = corpus
     )
     
     if (!dir.exists("outputs")) {
@@ -228,9 +220,9 @@ get_data_internal <- function(group1index,
   if (is.null(decade)) {
     output <- data[[2]]
   } else {
-    if(corpus=="coha"){
+    if (corpus == "coha") {
       output <- data[[1]][[(decade - 1810) / 10]]
-    }else{
+    } else{
       output <- data[[1]][[(decade - 1790) / 10]]
     }
     attr(output, "decade") <- decade
@@ -258,8 +250,9 @@ get_decade <-
   }
 ts1 <- get_ts("men", "women", "agentic", "engall")
 ts2 <- get_ts("men", "women", "communal", "coha")
-ts3 <- get_ts("men", "women", "fruit", "engall")
-ts4 <- get_ts("men", "women", "noun", "coha")
+ts3 <- get_ts("men", "women", "noun", "coha")
+ts4 <- get_ts("nonhuman", "women", "noun", "coha")
+
 
 
 decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
@@ -267,8 +260,6 @@ decade2 <- get_decade("men", "women", "agentic", "coha", 1820)
 decade2 <- get_decade("men", "women", "noun", "coha", 2010)
 
 
-ts1
-ts2
 ts4
 
 decade2
@@ -328,8 +319,6 @@ plot_multiple_ts <- function(ts_list) {
   return(p)
 }
 
-
-
 plot_one_decade <- function(decade_data) {
   # Extract attributes
   group1 <- attr(decade_data, "group1index")
@@ -369,36 +358,26 @@ plot_one_decade(get_decade("men", "women", "common", "engall", 1800))
 head(get_decade("men", "women", "agentic", "engall", 1990))
 ```
 ```{r propMissing}
-# How many group words are missing by decade?
-groupmiss_coha <- as.data.frame(matrix(nrow = length(wordvecs.dat_coha), ncol = dim(groupwrds)[2]))
+# Calculate the number of missing group words by decade
+groupmiss_coha <-
+  as.data.frame(sapply(1:dim(groupwrds)[2], function(j) {
+    sapply(1:length(wordvecs.dat_coha), function(i) {
+      sum(groupwrds[, j] %in% unavwords_coha[[i]])
+    })
+  }))
 colnames(groupmiss_coha) <- colnames(groupwrds)
-
-for (j in 1:dim(groupwrds)[2]){
-  for (i in 1:length(wordvecs.dat_coha)){
-    groupmiss_coha[i,j] <- length(groupwrds[,j][groupwrds[,j] %in% unavwords_coha[[i]]])
-  }}
-
-# How many group words are there available?
-for (i in 1:dim(groupwrds)[2]){
-  groupmiss_coha[21,i] <- as.numeric(table(groupwrds[,i] == "")[1])
-}
-
-groupmiss2_coha <- as.data.frame(matrix(nrow = length(wordvecs.dat_coha), ncol = dim(groupwrds)[2]))
+groupmiss_coha[21,] <- colSums(groupwrds != "", na.rm = TRUE)
+groupmiss2_coha <-
+  as.data.frame(sapply(1:dim(groupmiss_coha)[2], function(j) {
+    1 - groupmiss_coha[1:20, j] / groupmiss_coha[21, j]
+  }))
 colnames(groupmiss2_coha) <- colnames(groupwrds)
 
-for (j in 1:dim(groupmiss_coha)[2]){
-  for (i in 1:20){
-    groupmiss2_coha[i,j] <- 1 - (groupmiss_coha[i,j]/groupmiss_coha[21,j])
-  }}
+# Add the year column
+groupmiss2_coha$year <- seq(1820, 2010, by = 10)
+groupmiss2_coha
 
-# Create a sequence for the x-axis (1820 to 2010, every 10 years)
-years <- seq(1820, 2010, by = 10)
 
-# Ensure the length of the data matches the length of `years`
-# Assuming `men` and `women` are columns in groupmiss2_coha
-groupmiss2_coha$year <- years
-
-head(groupmiss2_coha)
 ```
 ```{r plotMissing}
 # Create the plot
@@ -414,9 +393,19 @@ ggplot(groupmiss2_coha, aes(x = year)) +
 ```
 
 ```{r outliersMissing}
-# Values above or below 3 standard deviations from the mean
-outliers_men <- groupmiss2_coha$men[abs(groupmiss2_coha$men - mean(groupmiss2_coha$men, na.rm = TRUE)) > 3 * sd(groupmiss2_coha$men, na.rm = TRUE)]
-outliers_women <- groupmiss2_coha$women[abs(groupmiss2_coha$women - mean(groupmiss2_coha$women, na.rm = TRUE)) > 3 * sd(groupmiss2_coha$women, na.rm = TRUE)]
+find_outliers <- function(column, year) {
+  is_outlier <-
+    abs(column - mean(column, na.rm = TRUE)) > 3 * sd(column, na.rm = TRUE)
+  data.frame(Decade = year[is_outlier], Value = column[is_outlier])
+}
+
+# Find outliers for men and women
+outliers_men <-
+  find_outliers(groupmiss2_coha$men, groupmiss2_coha$year)
+outliers_women <-
+  find_outliers(groupmiss2_coha$women, groupmiss2_coha$year)
+
+# Print results
 outliers_men
 outliers_women
 ```
@@ -424,23 +413,12 @@ outliers_women
 
 ```{r getMagnitudes}
 # Initialize an empty data frame to store results
-results_df <- data.frame(
-  year = integer(),
-  agentic_coha_men = numeric(),
-  agentic_coha_women = numeric(),
-  agentic_engall_men = numeric(),
-  agentic_engall_women = numeric(),
-  communal_coha_men = numeric(),
-  communal_coha_women = numeric(),
-  communal_engall_men = numeric(),
-  communal_engall_women = numeric(),
-  stringsAsFactors = FALSE
-)
+results_df <- data.frame()
 
 # Define the parameters to iterate over
-traits <- c("agentic", "communal")
+categories <- c("agentic", "communal")
 corpora <- c("coha", "engall")
-years <- seq(1800, 1990, by = 10)
+years <- seq(1800, 2010, by = 10)
 
 # Loop through each year
 for (year in years) {
@@ -448,21 +426,18 @@ for (year in years) {
   temp_row <- c(year)
   
   # Loop through each combination of trait and corpus
-  for (trait in traits) {
+  for (category in categories) {
     for (corpus in corpora) {
-      # Call the get_decade function
-      df <- get_decade("men", "women", trait, corpus, year)
-      
-      # Calculate the mean of men and women individually
-      mean_men <- mean(df$grp1ef, na.rm = TRUE)
-      mean_women <- mean(df$grp2ef, na.rm = TRUE)
-      
-      # Append the means to the temporary row
-      temp_row <- c(temp_row, mean_men, mean_women)
+      if ((year >= 1820 & corpus == "coha") | (year <= 1990 & corpus == "engall")) {
+        df <- get_decade("men", "women", category, corpus, year)
+        mean_men <- mean(df$grp1ef, na.rm = TRUE)
+        mean_women <- mean(df$grp2ef, na.rm = TRUE)
+        temp_row <- c(temp_row, mean_men, mean_women)
+      } else{
+        temp_row <- c(temp_row, NaN, NaN)
+      }
     }
   }
-  
-  # Append the temporary row to the results_df data frame
   results_df <- rbind(results_df, temp_row)
 }
 
@@ -476,40 +451,43 @@ colnames(results_df) <- c(
 )
 
 # Display the results
-print(results_df)
-ggplot(results_df, aes(x = year)) +
-  geom_line(aes(y = communal_engall_men, color = "Men")) +
-  geom_line(aes(y = communal_engall_women, color = "Women")) +
-  labs(
-    title = "Communal, engall",
-    x = "Year",
-    y = "Mean Values",
-    color = "Group"
-  ) +
-  theme_minimal() +
-  scale_color_manual(values = c("Men" = "blue", "Women" = "red"))
+generate_trait_corpus_plot <- function(data, trait, corpus) {
+  # Dynamically generate column names
+  y_men <- paste0(trait, "_", corpus, "_men")
+  y_women <- paste0(trait, "_", corpus, "_women")
+  
+  # Generate title
+  title <- paste(trait, corpus, sep = ", ")
+  
+  # Create the plot
+  ggplot(data, aes(x = year)) +
+    geom_line(aes_string(y = y_men, color = "'Men'")) +
+    geom_line(aes_string(y = y_women, color = "'Women'")) +
+    labs(
+      title = title,
+      x = "Year",
+      y = "Mean Values",
+      color = "Group"
+    ) +
+    theme_minimal() +
+    scale_color_manual(values = c("Men" = "blue", "Women" = "red"))
+}
 
-ggplot(results_df, aes(x = year)) +
-  geom_line(aes(y = agentic_engall_men, color = "Men")) +
-  geom_line(aes(y = agentic_engall_women, color = "Women")) +
-  labs(
-    title = "Agentic, engall",
-    x = "Year",
-    y = "Mean Values",
-    color = "Group"
-  ) +
-  theme_minimal() +
-  scale_color_manual(values = c("Men" = "blue", "Women" = "red"))
+generate_trait_corpus_plot(results_df, "communal", "coha")
+generate_trait_corpus_plot(results_df, "agentic", "coha")
+generate_trait_corpus_plot(results_df, "communal", "engall")
+generate_trait_corpus_plot(results_df, "agentic", "engall")
+
 ```
 
 ```{r plottingTsHumanNonhuman}
-plot_one_ts(get_ts("nonhuman", "women", "trait", "coha"))
-plot_one_ts(get_ts("nonhuman", "men", "trait", "coha"))
+plot_one_ts(get_ts("nonhuman", "women", "agentic", "coha"))
+plot_one_ts(get_ts("nonhuman", "men", "communal", "coha"))
 
 human_nonhuman_ts<-list(get_ts("nonhuman", "women", "trait", "coha"),get_ts("nonhuman", "men", "trait", "coha"), get_ts("nonhuman", "women", "trait", "engall"),get_ts("nonhuman", "men", "trait", "engall"),get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "trait", "coha"))
 plot_multiple_ts(human_nonhuman_ts)
 
-plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
+plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 2010))
 
 ```
 
@@ -524,5 +502,8 @@ men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"),get_ts("m
 plot_multiple_ts(men_women_trait_job_ts)
 
 # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
+
+plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 1850))
+
 
 ```
