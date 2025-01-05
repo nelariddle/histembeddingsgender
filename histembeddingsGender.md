@@ -181,24 +181,8 @@ plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-2.png)<!-- -->
-
-``` r
-plot_one_decade(get_decade("men", "women", "common", "engall", 1800))
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingDecade-3.png)<!-- -->
-
-``` r
-head(get_decade("men", "women", "agentic", "engall", 1990))
-```
-
-    ##                     grp1ef       grp2ef          trait
-    ## able            0.03830098 -0.019302234           able
-    ## accomplish     -0.02177715 -0.053832454     accomplish
-    ## accomplishment  0.02045993  0.005052507 accomplishment
-    ## accuracy       -0.05605307 -0.069085822       accuracy
-    ## accurate       -0.03337303 -0.060975881       accurate
-    ## achieve        -0.04780008 -0.064694855        achieve
+The titles of the plots contain the Pearson coefficient, which is what
+we use to measure the similarity of the two groups.
 
 ``` r
 # Calculate the number of missing group words by decade
