@@ -42,13 +42,15 @@ examples
 head(agentic)
 ```
 
-    ## [1] "able"           "accomplish"     "accomplishment" "accuracy"       "accurate"       "achieve"
+    ## [1] "able"           "accomplish"     "accomplishment" "accuracy"      
+    ## [5] "accurate"       "achieve"
 
 ``` r
 head(communal)
 ```
 
-    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"   "accommodation" "accompany"
+    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"   "accommodation"
+    ## [6] "accompany"
 
 The group word lists were taken from
 <https://pubmed.ncbi.nlm.nih.gov/35787033/>, as well as the trait list:
@@ -57,7 +59,8 @@ The group word lists were taken from
 head(groupwrds$men)
 ```
 
-    ## [1] "men"         "man"         "male"        "males"       "masculine"   "masculinity"
+    ## [1] "men"         "man"         "male"        "males"       "masculine"  
+    ## [6] "masculinity"
 
 ``` r
 head(groupwrds$women)
@@ -69,13 +72,15 @@ head(groupwrds$women)
 head(trait)
 ```
 
-    ## [1] "able"          "abrupt"        "absentminded"  "abusive"       "accommodating" "accurate"
+    ## [1] "able"          "abrupt"        "absentminded"  "abusive"       "accommodating"
+    ## [6] "accurate"
 
 The job titles were scraped off this site:
 <https://spotterful.com/blog/job-description-template/job-titles-list-a-z>,
 and expanded through nearest neighbors
 
-    ## [1] "accompanist"   "accountant"    "actuary"       "actor"         "acupuncturist" "adjudicator"
+    ## [1] "accompanist"   "accountant"    "actuary"       "actor"         "acupuncturist"
+    ## [6] "adjudicator"
 
 The workhorse function; it iterates over each decade, computing the MAC
 score between each word and each group, then finds the Pearson
