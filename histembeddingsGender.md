@@ -137,29 +137,35 @@ grpwrdassoc_rel <-
   }
 ```
 
-Demonstrating the mac function in fact works
+An example of how the mac function works (using engall 1990); here we
+compute the mean average correlation of each word in the first list to
+the list of animals. It makes sense that the animals in the first list
+had the highest mac score.
 
 ``` r
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
-  S = c("cat", "puppy", "canine", "happy", "weird", "car"),
-  A = c("dog")
+  S = c("elephant", "horse", "tiger", "happy", "weird", "car"),
+  A = c("dog", "cat", "turtle", "fish", "monkey")
 )$P)
 ```
 
-    ##        cat      puppy     canine      happy      weird        car 
-    ## 0.52902236 0.47944586 0.36709169 0.08328442 0.15497696 0.21841119
+    ##   elephant      horse      tiger      happy      weird        car 
+    ## 0.29825993 0.26152604 0.32429946 0.01836855 0.12177856 0.09239695
+
+You can compute the cosine similarity of any two words by replacing the
+lists with single words.
 
 ``` r
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
-  S = c("god", "bible", "lord", "banana", "french", "blond"),
-  A = c("jesus")
+  S = "happy",
+  A = "sad"
 )$P)
 ```
 
-    ##         god       bible        lord      banana      french       blond 
-    ##  0.55230813  0.32821543  0.50016478 -0.06574848  0.03215507  0.03632459
+    ##     happy 
+    ## 0.4395598
 
 ``` r
 ts1 <- get_ts("men", "women", "agentic", "engall")
@@ -468,14 +474,28 @@ plot_one_ts(get_ts("men", "women", "job", "coha"))
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-2.png)<!-- -->
 
 ``` r
-men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("men", "women", "job", "coha"), get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "job", "engall"))
+men_women_trait_job_ts <-
+  list(
+    get_ts("men", "women", "trait", "coha"),
+    get_ts("men", "women", "job", "coha"),
+    get_ts("men", "women", "trait", "engall"),
+    get_ts("men", "women", "job", "engall")
+  )
 plot_multiple_ts(men_women_trait_job_ts)
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-3.png)<!-- -->
 
 ``` r
-men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"),get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"),get_ts("men", "women", "common", "engall"),get_ts("men", "women", "common", "coha"))
+men_women_trait_job_ts <-
+  list(
+    get_ts("men", "women", "agentic", "coha"),
+    get_ts("men", "women", "communal", "coha"),
+    get_ts("men", "women", "agentic", "engall"),
+    get_ts("men", "women", "communal", "engall"),
+    get_ts("men", "women", "common", "engall"),
+    get_ts("men", "women", "common", "coha")
+  )
 plot_multiple_ts(men_women_trait_job_ts)
 ```
 
@@ -484,15 +504,15 @@ plot_multiple_ts(men_women_trait_job_ts)
 ``` r
 # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
 
-plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 1850))
+plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1850))
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-    ## Warning: Removed 280 rows containing non-finite values (`stat_smooth()`).
+    ## Warning: Removed 131 rows containing non-finite values (`stat_smooth()`).
 
-    ## Warning: Removed 280 rows containing missing values (`geom_point()`).
+    ## Warning: Removed 131 rows containing missing values (`geom_point()`).
 
-    ## Warning: Removed 280 rows containing missing values (`geom_text()`).
+    ## Warning: Removed 131 rows containing missing values (`geom_text()`).
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-5.png)<!-- -->

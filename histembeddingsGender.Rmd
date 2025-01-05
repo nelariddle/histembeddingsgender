@@ -152,19 +152,20 @@ grpwrdassoc_rel <-
     return(output_rel)
   }
 ```
-Demonstrating the mac function in fact works
+An example of how the mac function works (using engall 1990); here we compute the mean average correlation of each word in the first list to the list of animals. It makes sense that the animals in the first list had the highest mac score.
 ```{r sanityCheck1}
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
-  S = c("cat", "puppy", "canine", "happy", "weird", "car"),
-  A = c("dog")
+  S = c("elephant", "horse", "tiger", "happy", "weird", "car"),
+  A = c("dog", "cat", "turtle", "fish", "monkey")
 )$P)
 ```
+You can compute the cosine similarity of any two words by replacing the lists with single words.
 ```{r sanityCheck2}
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
-  S = c("god", "bible", "lord", "banana", "french", "blond"),
-  A = c("jesus")
+  S = "happy",
+  A = "sad"
 )$P)
 ```
 
@@ -382,6 +383,7 @@ groupmiss2_coha
 
 
 ```
+
 ```{r plotMissing}
 # Create the plot
 ggplot(groupmiss2_coha, aes(x = year)) +
@@ -498,15 +500,29 @@ plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 2010))
 plot_one_ts(get_ts("men", "women", "trait", "coha"))
 plot_one_ts(get_ts("men", "women", "job", "coha"))
 
-men_women_trait_job_ts<-list(get_ts("men", "women", "trait", "coha"), get_ts("men", "women", "job", "coha"), get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "job", "engall"))
+men_women_trait_job_ts <-
+  list(
+    get_ts("men", "women", "trait", "coha"),
+    get_ts("men", "women", "job", "coha"),
+    get_ts("men", "women", "trait", "engall"),
+    get_ts("men", "women", "job", "engall")
+  )
 plot_multiple_ts(men_women_trait_job_ts)
 
-men_women_trait_job_ts<-list(get_ts("men", "women", "agentic", "coha"),get_ts("men", "women", "communal", "coha"), get_ts("men", "women", "agentic", "engall"),get_ts("men", "women", "communal", "engall"),get_ts("men", "women", "common", "engall"),get_ts("men", "women", "common", "coha"))
+men_women_trait_job_ts <-
+  list(
+    get_ts("men", "women", "agentic", "coha"),
+    get_ts("men", "women", "communal", "coha"),
+    get_ts("men", "women", "agentic", "engall"),
+    get_ts("men", "women", "communal", "engall"),
+    get_ts("men", "women", "common", "engall"),
+    get_ts("men", "women", "common", "coha")
+  )
 plot_multiple_ts(men_women_trait_job_ts)
 
 # plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
 
-plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 1850))
+plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1850))
 
 
 ```
