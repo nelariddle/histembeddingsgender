@@ -167,54 +167,12 @@ print(mac(
     ##     happy 
     ## 0.4395598
 
-``` r
-ts1 <- get_ts("men", "women", "agentic", "engall")
-ts2 <- get_ts("men", "women", "communal", "coha")
-ts3 <- get_ts("men", "women", "noun", "coha")
-ts4 <- get_ts("nonhuman", "women", "noun", "coha")
-
-
-
-decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
-decade2 <- get_decade("men", "women", "agentic", "coha", 1820)
-decade2 <- get_decade("men", "women", "noun", "coha", 2010)
-
-
-ts4
-```
-
-    ## Time Series:
-    ## Start = 1820 
-    ## End = 2010 
-    ## Frequency = 0.1 
-    ##  [1] 0.5666162 0.4309299 0.1850314 0.2648075 0.3305753 0.4125082 0.2793425 0.3600384 0.3158208 0.5707101
-    ## [11] 0.4633638 0.3282957 0.6107289 0.5777284 0.5585068 0.6213059 0.6853386 0.6157834 0.7589619 0.6207805
-    ## attr(,"group1index")
-    ## [1] nonhuman
-    ## attr(,"group2index")
-    ## [1] women
-    ## attr(,"wordterms")
-    ## [1] noun
-    ## attr(,"corpus")
-    ## [1] coha
-
-``` r
-head(decade2)
-```
-
-    ##                grp1ef       grp2ef    trait
-    ## apple    -0.017514188  0.012216518    apple
-    ## bridge    0.021930537 -0.020148409   bridge
-    ## car       0.022090929 -0.005440041      car
-    ## dream     0.066796697  0.081342743    dream
-    ## elephant  0.231220794  0.213757766 elephant
-    ## forest   -0.007872557  0.006766126   forest
+We can plot the mac scores for two different groups against each other
+like so:
 
 ``` r
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
 ```
-
-    ## `geom_smooth()` using formula = 'y ~ x'
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-1.png)<!-- -->
 
@@ -222,15 +180,11 @@ plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
 plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
 ```
 
-    ## `geom_smooth()` using formula = 'y ~ x'
-
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-2.png)<!-- -->
 
 ``` r
 plot_one_decade(get_decade("men", "women", "common", "engall", 1800))
 ```
-
-    ## `geom_smooth()` using formula = 'y ~ x'
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-3.png)<!-- -->
 
@@ -451,8 +405,6 @@ plot_multiple_ts(human_nonhuman_ts)
 plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 2010))
 ```
 
-    ## `geom_smooth()` using formula = 'y ~ x'
-
     ## Warning: Removed 244 rows containing non-finite values (`stat_smooth()`).
 
     ## Warning: Removed 244 rows containing missing values (`geom_point()`).
@@ -506,8 +458,6 @@ plot_multiple_ts(men_women_trait_job_ts)
 
 plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1850))
 ```
-
-    ## `geom_smooth()` using formula = 'y ~ x'
 
     ## Warning: Removed 131 rows containing non-finite values (`stat_smooth()`).
 

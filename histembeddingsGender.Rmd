@@ -251,7 +251,7 @@ get_decade <-
   }
 ```
 
-```{r sampleCalls}
+```{r sampleCalls, echo = FALSE}
 ts1 <- get_ts("men", "women", "agentic", "engall")
 ts2 <- get_ts("men", "women", "communal", "coha")
 ts3 <- get_ts("men", "women", "noun", "coha")
@@ -262,11 +262,6 @@ ts4 <- get_ts("nonhuman", "women", "noun", "coha")
 decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
 decade2 <- get_decade("men", "women", "agentic", "coha", 1820)
 decade2 <- get_decade("men", "women", "noun", "coha", 2010)
-
-
-ts4
-
-head(decade2)
 ```
 
 ```{r makePlotsRevised, echo=FALSE, message=FALSE, warning=FALSE}
@@ -317,11 +312,12 @@ plot_multiple_ts <- function(ts_list) {
     )) +
     geom_line() +
     labs(title = "Multiple Time Series Plot", x = "Year", y = "Similarity Coefficient") +
-    facet_wrap( ~ corpus, scales = "fixed") +
+    facet_wrap(~ corpus, scales = "fixed") +
     theme_minimal() + guides(color = guide_legend(title = NULL))
   
   return(p)
 }
+
 
 plot_one_decade <- function(decade_data) {
   # Extract attributes
@@ -332,17 +328,29 @@ plot_one_decade <- function(decade_data) {
   decade <- attr(decade_data, "decade")
   
   # Calculate Pearson correlation
-  pearson_corr <- cor(decade_data$grp1ef, decade_data$grp2ef, use = "complete.obs")
+  pearson_corr <-
+    cor(decade_data$grp1ef, decade_data$grp2ef, use = "complete.obs")
   
   # Create title
   title <- paste0(
-    group1, " vs ", group2, ", ", word_term, 
-    " (", corpus, ", ", decade, ", r = ", round(pearson_corr, 2), ")"
+    group1,
+    " vs ",
+    group2,
+    ", ",
+    word_term,
+    " (",
+    corpus,
+    ", ",
+    decade,
+    ", r = ",
+    round(pearson_corr, 2),
+    ")"
   )
   
   # Create plot
   p <- ggplot(decade_data, aes(x = grp1ef, y = grp2ef)) +
-    geom_point(color = "blue") + geom_smooth(method="lm")+
+    geom_point(color = "blue") + geom_smooth(method = "lm", formula = y ~
+                                               x) +
     geom_text(aes(label = trait), vjust = -0.5, size = 3) +
     labs(title = title, x = group1, y = group2) +
     theme_minimal()
@@ -351,6 +359,7 @@ plot_one_decade <- function(decade_data) {
 }
 
 ```
+We can plot the mac scores for two different groups against each other like so:
 
 ```{r plottingDecade, warning=FALSE}
 
