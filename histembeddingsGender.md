@@ -253,7 +253,7 @@ ggplot(groupmiss2_coha, aes(x = year)) +
   theme_minimal()
 ```
 
-![](histembeddingsGender_files/figure-gfm/plotMissing-1.png)<!-- -->
+![](histembeddingsGender_files/figure-gfm/plotMissingCoha-1.png)<!-- -->
 Clearly many fewer words were available in that first decade; let’s
 check for statistical outliers.
 
@@ -284,8 +284,95 @@ outliers_women
     ##   Decade     Value
     ## 1   1820 0.3714286
 
-Since 1820 was an outlier for both men and women, we can safely ignore
-that decade from COHA.
+Repeat for engall:
+
+``` r
+# Calculate the number of missing group words by decade
+groupmiss <-
+  as.data.frame(sapply(1:dim(groupwrds)[2], function(j) {
+    sapply(1:length(wordvecs.dat), function(i) {
+      sum(groupwrds[, j] %in% unavwords[[i]])
+    })
+  }))
+colnames(groupmiss) <- colnames(groupwrds)
+groupmiss[21,] <- colSums(groupwrds != "", na.rm = TRUE)
+groupmiss2 <-
+  as.data.frame(sapply(1:dim(groupmiss)[2], function(j) {
+    1 - groupmiss[1:20, j] / groupmiss[21, j]
+  }))
+colnames(groupmiss2) <- colnames(groupwrds)
+
+# Add the year column
+rownames(groupmiss2) <- seq(1800, 1990, by = 10)
+groupmiss2$year <- seq(1800, 1990, by = 10)
+groupmiss2
+```
+
+    ##            men     women     human  nonhuman year
+    ## 1800 0.7272727 0.6571429 0.6428571 0.5555556 1800
+    ## 1810 0.7575758 0.7142857 0.7142857 0.6111111 1810
+    ## 1820 0.7878788 0.8000000 0.7142857 0.6111111 1820
+    ## 1830 0.7878788 0.8000000 0.7142857 0.6111111 1830
+    ## 1840 0.7878788 0.8285714 0.7142857 0.7777778 1840
+    ## 1850 0.7878788 0.8285714 0.8571429 0.7777778 1850
+    ## 1860 0.7878788 0.8285714 0.8571429 0.7777778 1860
+    ## 1870 0.7878788 0.8000000 0.9285714 0.8333333 1870
+    ## 1880 0.8484848 0.8857143 0.9285714 0.8333333 1880
+    ## 1890 0.8484848 0.9142857 0.9285714 0.8333333 1890
+    ## 1900 0.8484848 0.9142857 0.9285714 0.8333333 1900
+    ## 1910 0.8787879 0.8571429 1.0000000 0.8333333 1910
+    ## 1920 0.8484848 0.8857143 1.0000000 0.8333333 1920
+    ## 1930 0.8484848 0.8285714 1.0000000 0.8333333 1930
+    ## 1940 0.8484848 0.8285714 1.0000000 0.8333333 1940
+    ## 1950 0.8787879 0.8857143 1.0000000 0.8333333 1950
+    ## 1960 0.9090909 0.9428571 1.0000000 0.9444444 1960
+    ## 1970 0.9393939 0.9428571 1.0000000 1.0000000 1970
+    ## 1980 0.9696970 0.9714286 1.0000000 1.0000000 1980
+    ## 1990 1.0000000 1.0000000 1.0000000 1.0000000 1990
+
+``` r
+# Create the plot
+ggplot(groupmiss2, aes(x = year)) +
+  geom_line(aes(y = men, color = "Men")) +
+  geom_line(aes(y = women, color = "Women")) +
+  scale_color_manual(values = c("Men" = "blue", "Women" = "red")) +
+  labs(title = "prop. group words available over time",
+       x = "Years",
+       y = "Values",
+       color = "Legend") +
+  theme_minimal()
+```
+
+![](histembeddingsGender_files/figure-gfm/plotMissingEngall-1.png)<!-- -->
+
+``` r
+find_outliers <- function(column, year) {
+  is_outlier <-
+    abs(column - mean(column, na.rm = TRUE)) > 3 * sd(column, na.rm = TRUE)
+  data.frame(Decade = year[is_outlier], Value = column[is_outlier])
+}
+
+# Find outliers for men and women
+outliers_men <-
+  find_outliers(groupmiss2$men, groupmiss2_coha$year)
+outliers_women <-
+  find_outliers(groupmiss2$women, groupmiss2_coha$year)
+
+# Print results
+outliers_men
+```
+
+    ## [1] Decade Value 
+    ## <0 rows> (or 0-length row.names)
+
+``` r
+outliers_women
+```
+
+    ## [1] Decade Value 
+    ## <0 rows> (or 0-length row.names)
+
+Engall has no outliers, as expected.
 
     ##  [1] 0.084520244 0.036986220 0.017284895 0.001474853 0.018157545 0.001449928
     ##  [7] 0.022906022 0.023492385 0.029276455 0.045164065 0.047460166 0.048764028

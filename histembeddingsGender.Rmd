@@ -366,7 +366,7 @@ plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 The titles of the plots contain the Pearson coefficient, which is what we use to measure the similarity of the two groups.
 
 Noticing that the 1820 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing certain words.
-```{r propMissing}
+```{r propMissingCoha}
 # Calculate the number of missing group words by decade
 groupmiss_coha <-
   as.data.frame(sapply(1:dim(groupwrds)[2], function(j) {
@@ -386,11 +386,9 @@ colnames(groupmiss2_coha) <- colnames(groupwrds)
 rownames(groupmiss2_coha) <- seq(1820, 2010, by = 10)
 groupmiss2_coha$year <- seq(1820, 2010, by = 10)
 groupmiss2_coha
-
-
 ```
 
-```{r plotMissing}
+```{r plotMissingCoha}
 # Create the plot
 ggplot(groupmiss2_coha, aes(x = year)) +
   geom_line(aes(y = men, color = "Men")) +
@@ -403,7 +401,7 @@ ggplot(groupmiss2_coha, aes(x = year)) +
   theme_minimal()
 ```
 Clearly many fewer words were available in that first decade; let's check for statistical outliers.
-```{r outliersMissing}
+```{r outliersMissingCoha}
 find_outliers <- function(column, year) {
   is_outlier <-
     abs(column - mean(column, na.rm = TRUE)) > 3 * sd(column, na.rm = TRUE)
@@ -420,7 +418,59 @@ outliers_women <-
 outliers_men
 outliers_women
 ```
-Since 1820 was an outlier for both men and women, we can safely ignore that decade from COHA.
+Repeat for engall:
+```{r propMissingEngall}
+# Calculate the number of missing group words by decade
+groupmiss <-
+  as.data.frame(sapply(1:dim(groupwrds)[2], function(j) {
+    sapply(1:length(wordvecs.dat), function(i) {
+      sum(groupwrds[, j] %in% unavwords[[i]])
+    })
+  }))
+colnames(groupmiss) <- colnames(groupwrds)
+groupmiss[21,] <- colSums(groupwrds != "", na.rm = TRUE)
+groupmiss2 <-
+  as.data.frame(sapply(1:dim(groupmiss)[2], function(j) {
+    1 - groupmiss[1:20, j] / groupmiss[21, j]
+  }))
+colnames(groupmiss2) <- colnames(groupwrds)
+
+# Add the year column
+rownames(groupmiss2) <- seq(1800, 1990, by = 10)
+groupmiss2$year <- seq(1800, 1990, by = 10)
+groupmiss2
+```
+
+```{r plotMissingEngall}
+# Create the plot
+ggplot(groupmiss2, aes(x = year)) +
+  geom_line(aes(y = men, color = "Men")) +
+  geom_line(aes(y = women, color = "Women")) +
+  scale_color_manual(values = c("Men" = "blue", "Women" = "red")) +
+  labs(title = "prop. group words available over time",
+       x = "Years",
+       y = "Values",
+       color = "Legend") +
+  theme_minimal()
+```
+```{r outliersMissingEngall}
+find_outliers <- function(column, year) {
+  is_outlier <-
+    abs(column - mean(column, na.rm = TRUE)) > 3 * sd(column, na.rm = TRUE)
+  data.frame(Decade = year[is_outlier], Value = column[is_outlier])
+}
+
+# Find outliers for men and women
+outliers_men <-
+  find_outliers(groupmiss2$men, groupmiss2_coha$year)
+outliers_women <-
+  find_outliers(groupmiss2$women, groupmiss2_coha$year)
+
+# Print results
+outliers_men
+outliers_women
+```
+Engall has no outliers, as expected.
 ```{r meanFunc, echo=FALSE}
 get_ts_averages <- function(group1index,
                             wordterms,
