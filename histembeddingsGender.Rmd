@@ -308,7 +308,8 @@ plot_multiple_ts <- function(ts_list) {
     )) +
     geom_line() +
     labs(title = "Multiple Time Series Plot", x = "Year", y = "Similarity Coefficient") +
-    facet_wrap( ~ corpus, scales = "fixed") +
+    facet_wrap(~ corpus, scales = "fixed") +
+    scale_y_continuous(limits = c(0, 1)) +
     theme_minimal() + guides(color = guide_legend(title = NULL))
   
   return(p)
@@ -454,12 +455,6 @@ ggplot(groupmiss2, aes(x = year)) +
   theme_minimal()
 ```
 ```{r outliersMissingEngall}
-find_outliers <- function(column, year) {
-  is_outlier <-
-    abs(column - mean(column, na.rm = TRUE)) > 3 * sd(column, na.rm = TRUE)
-  data.frame(Decade = year[is_outlier], Value = column[is_outlier])
-}
-
 # Find outliers for men and women
 outliers_men <-
   find_outliers(groupmiss2$men, groupmiss2_coha$year)
@@ -471,6 +466,26 @@ outliers_men
 outliers_women
 ```
 Engall has no outliers, as expected.
+
+Now we can begin to plot the actual correlation values over time, starting with engall:
+```{r plottingTsMenWomen}
+men_women_trait_job_ts <-
+  list(
+    # get_ts("men", "women", "trait", "coha"),
+    # get_ts("men", "women", "job", "coha"),
+    get_ts("men", "women", "trait", "engall"),
+    get_ts("men", "women", "job", "engall")
+  )
+plot_multiple_ts(men_women_trait_job_ts)
+
+men_women_agentic_communal_ts <-
+  list(
+    get_ts("men", "women", "agentic", "engall"),
+    get_ts("men", "women", "communal", "engall")
+  )
+plot_multiple_ts(men_women_agentic_communal_ts)
+
+```
 ```{r meanFunc, echo=FALSE}
 get_ts_averages <- function(group1index,
                             wordterms,
@@ -570,36 +585,5 @@ human_nonhuman_ts<-list(get_ts("nonhuman", "women", "trait", "coha"),get_ts("non
 plot_multiple_ts(human_nonhuman_ts)
 
 plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 2010))
-
-```
-
-```{r plottingTsMenWomen}
-plot_one_ts(get_ts("men", "women", "trait", "coha"))
-plot_one_ts(get_ts("men", "women", "job", "coha"))
-
-men_women_trait_job_ts <-
-  list(
-    get_ts("men", "women", "trait", "coha"),
-    get_ts("men", "women", "job", "coha"),
-    get_ts("men", "women", "trait", "engall"),
-    get_ts("men", "women", "job", "engall")
-  )
-plot_multiple_ts(men_women_trait_job_ts)
-
-men_women_trait_job_ts <-
-  list(
-    get_ts("men", "women", "agentic", "coha"),
-    get_ts("men", "women", "communal", "coha"),
-    get_ts("men", "women", "agentic", "engall"),
-    get_ts("men", "women", "communal", "engall"),
-    get_ts("men", "women", "common", "engall"),
-    get_ts("men", "women", "common", "coha")
-  )
-plot_multiple_ts(men_women_trait_job_ts)
-
-# plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
-
-plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1850))
-
 
 ```

@@ -346,12 +346,6 @@ ggplot(groupmiss2, aes(x = year)) +
 ![](histembeddingsGender_files/figure-gfm/plotMissingEngall-1.png)<!-- -->
 
 ``` r
-find_outliers <- function(column, year) {
-  is_outlier <-
-    abs(column - mean(column, na.rm = TRUE)) > 3 * sd(column, na.rm = TRUE)
-  data.frame(Decade = year[is_outlier], Value = column[is_outlier])
-}
-
 # Find outliers for men and women
 outliers_men <-
   find_outliers(groupmiss2$men, groupmiss2_coha$year)
@@ -374,10 +368,37 @@ outliers_women
 
 Engall has no outliers, as expected.
 
-    ##  [1] 0.084520244 0.036986220 0.017284895 0.001474853 0.018157545 0.001449928
-    ##  [7] 0.022906022 0.023492385 0.029276455 0.045164065 0.047460166 0.048764028
-    ## [13] 0.050883157 0.055722354 0.041074543 0.040904315 0.069172537 0.077888404
-    ## [19] 0.065539308 0.113000601
+Now we can begin to plot the actual correlation values over time,
+starting with engall:
+
+``` r
+men_women_trait_job_ts <-
+  list(
+    # get_ts("men", "women", "trait", "coha"),
+    # get_ts("men", "women", "job", "coha"),
+    get_ts("men", "women", "trait", "engall"),
+    get_ts("men", "women", "job", "engall")
+  )
+plot_multiple_ts(men_women_trait_job_ts)
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-1.png)<!-- -->
+
+``` r
+men_women_agentic_communal_ts <-
+  list(
+    get_ts("men", "women", "agentic", "engall"),
+    get_ts("men", "women", "communal", "engall")
+  )
+plot_multiple_ts(men_women_agentic_communal_ts)
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-2.png)<!-- -->
+
+    ##  [1] 0.084520244 0.036986220 0.017284895 0.001474853 0.018157545
+    ##  [6] 0.001449928 0.022906022 0.023492385 0.029276455 0.045164065
+    ## [11] 0.047460166 0.048764028 0.050883157 0.055722354 0.041074543
+    ## [16] 0.040904315 0.069172537 0.077888404 0.065539308 0.113000601
     ## attr(,"group1index")
     ## [1] "men"
     ## attr(,"wordterms")
@@ -450,6 +471,13 @@ generate_trait_corpus_plot <- function(data, trait, corpus) {
 generate_trait_corpus_plot(results_df, "communal", "coha")
 ```
 
+    ## Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+    ## ℹ Please use tidy evaluation idioms with `aes()`.
+    ## ℹ See also `vignette("ggplot2-in-packages")` for more information.
+    ## This warning is displayed once every 8 hours.
+    ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+    ## generated.
+
     ## Warning: Removed 2 rows containing missing values (`geom_line()`).
     ## Removed 2 rows containing missing values (`geom_line()`).
 
@@ -499,6 +527,8 @@ human_nonhuman_ts<-list(get_ts("nonhuman", "women", "trait", "coha"),get_ts("non
 plot_multiple_ts(human_nonhuman_ts)
 ```
 
+    ## Warning: Removed 3 rows containing missing values (`geom_line()`).
+
 ![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-3.png)<!-- -->
 
 ``` r
@@ -512,57 +542,3 @@ plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 2010))
     ## Warning: Removed 244 rows containing missing values (`geom_text()`).
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-4.png)<!-- -->
-
-``` r
-plot_one_ts(get_ts("men", "women", "trait", "coha"))
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-1.png)<!-- -->
-
-``` r
-plot_one_ts(get_ts("men", "women", "job", "coha"))
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-2.png)<!-- -->
-
-``` r
-men_women_trait_job_ts <-
-  list(
-    get_ts("men", "women", "trait", "coha"),
-    get_ts("men", "women", "job", "coha"),
-    get_ts("men", "women", "trait", "engall"),
-    get_ts("men", "women", "job", "engall")
-  )
-plot_multiple_ts(men_women_trait_job_ts)
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-3.png)<!-- -->
-
-``` r
-men_women_trait_job_ts <-
-  list(
-    get_ts("men", "women", "agentic", "coha"),
-    get_ts("men", "women", "communal", "coha"),
-    get_ts("men", "women", "agentic", "engall"),
-    get_ts("men", "women", "communal", "engall"),
-    get_ts("men", "women", "common", "engall"),
-    get_ts("men", "women", "common", "coha")
-  )
-plot_multiple_ts(men_women_trait_job_ts)
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-4.png)<!-- -->
-
-``` r
-# plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1990))
-
-plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1850))
-```
-
-    ## Warning: Removed 131 rows containing non-finite values (`stat_smooth()`).
-
-    ## Warning: Removed 131 rows containing missing values (`geom_point()`).
-
-    ## Warning: Removed 131 rows containing missing values (`geom_text()`).
-
-![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-5.png)<!-- -->
