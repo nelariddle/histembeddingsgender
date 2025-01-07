@@ -291,7 +291,11 @@ plot_multiple_ts <- function(ts_list) {
   for (i in seq_along(ts_list)) {
     ts_data <- ts_list[[i]]
     ts_df <- data.frame(
-      Year = seq(from = 1800, to = 1990, by = 10),
+      Year = if (attr(ts_data, "corpus") == "engall") {
+        seq(from = 1800, to = 1990, by = 10)
+      } else {
+        seq(from = 1820, to = 2010, by = 10)
+      },
       Value = as.vector(ts_data),
       group1 = attr(ts_data, "group1index"),
       group2 = attr(ts_data, "group2index"),
@@ -300,6 +304,7 @@ plot_multiple_ts <- function(ts_list) {
     )
     combined_df <- rbind(combined_df, ts_df)
   }
+  print(combined_df)
   p <-
     ggplot(combined_df, aes(
       x = Year,
@@ -314,7 +319,6 @@ plot_multiple_ts <- function(ts_list) {
   
   return(p)
 }
-
 
 plot_one_decade <- function(decade_data) {
   # Extract attributes
@@ -471,8 +475,6 @@ Now we can begin to plot the actual correlation values over time, starting with 
 ```{r plottingTsMenWomen}
 men_women_trait_job_ts <-
   list(
-    # get_ts("men", "women", "trait", "coha"),
-    # get_ts("men", "women", "job", "coha"),
     get_ts("men", "women", "trait", "engall"),
     get_ts("men", "women", "job", "engall")
   )
@@ -486,6 +488,7 @@ men_women_agentic_communal_ts <-
 plot_multiple_ts(men_women_agentic_communal_ts)
 
 ```
+Now, let's look at the actual magnitudes of the mac scores.
 ```{r meanFunc, echo=FALSE}
 get_ts_averages <- function(group1index,
                             wordterms,
@@ -495,7 +498,7 @@ get_ts_averages <- function(group1index,
   } else {
     years <- seq(1800, 1990, by = 10)
   }
-  output<-sapply(years, function(year) {
+  output <- sapply(years, function(year) {
     mean(get_decade(group1index, "women", wordterms, corpus, year)$grp1ef,
          na.rm = TRUE)
   })
@@ -506,6 +509,46 @@ get_ts_averages <- function(group1index,
   return(output)
 }
 get_ts_averages("men", "agentic", "coha")
+```
+```{r plottingMeans}
+plot_multiple_ts_averages <- function(ts_list) {
+  combined_df <- data.frame()
+  for (i in seq_along(ts_list)) {
+    ts_data <- ts_list[[i]]
+    ts_df <- data.frame(
+      Year = seq(from = 1800, to = 1990, by = 10),
+      Value = as.vector(ts_data),
+      group1 = attr(ts_data, "group1index"),
+      word_term = attr(ts_data, "wordterms"),
+      corpus = attr(ts_data, "corpus")
+    )
+    combined_df <- rbind(combined_df, ts_df)
+  }
+  combined_df
+  p <-
+    ggplot(combined_df, aes(
+      x = Year,
+      y = Value,
+      color = interaction(group1, word_term)
+    )) +
+    geom_line() +
+    labs(title = "Multiple Time Series Plot", x = "Year", y = "Similarity Coefficient") +
+    facet_wrap( ~ word_term, scales = "fixed") +
+    scale_y_continuous(limits = c(-.1, .1)) +
+    theme_minimal() + guides(color = guide_legend(title = NULL))
+  
+  return(p)
+}
+```
+```{r plottingTsMenWomen}
+men_women_trait_job_ts <-
+  list(
+    get_ts_averages("men", "agentic", "engall"),
+    get_ts_averages("men", "communal", "engall"),
+    get_ts_averages("women", "agentic", "engall"),
+    get_ts_averages("women", "communal", "engall")
+  )
+plot_multiple_ts_averages(men_women_trait_job_ts)
 ```
 
 ```{r getMagnitudes}
