@@ -53,6 +53,7 @@ agentic <- read_list("agentic.txt", "agentic")
 communal <- read_list("communal.txt", "communal")
 trait <- read_list("traitlist.txt", "trait")
 job <- read_list("joblist.txt", "job")
+# job <- read_list("joblistDOT.txt", "job")
 fruit <- read_list("fruit.txt", "fruit")
 noun <- read_list("nouns.txt", "noun")
 common <- read_list("common.txt", "common")
@@ -286,10 +287,7 @@ plot_one_ts <-
   }
 
 plot_multiple_ts <- function(ts_list) {
-  # Create an empty data frame to store all the time series data
   combined_df <- data.frame()
-  
-  # Loop through each time series in the list and prepare the data for plotting
   for (i in seq_along(ts_list)) {
     ts_data <- ts_list[[i]]
     ts_df <- data.frame(
@@ -302,8 +300,6 @@ plot_multiple_ts <- function(ts_list) {
     )
     combined_df <- rbind(combined_df, ts_df)
   }
-  
-  # Create the plot with facets by corpus
   p <-
     ggplot(combined_df, aes(
       x = Year,
@@ -312,7 +308,7 @@ plot_multiple_ts <- function(ts_list) {
     )) +
     geom_line() +
     labs(title = "Multiple Time Series Plot", x = "Year", y = "Similarity Coefficient") +
-    facet_wrap(~ corpus, scales = "fixed") +
+    facet_wrap( ~ corpus, scales = "fixed") +
     theme_minimal() + guides(color = guide_legend(title = NULL))
   
   return(p)
@@ -364,10 +360,16 @@ We can plot the mac scores for two different groups against each other like so:
 ```{r plottingDecade, warning=FALSE}
 
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
+plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
-
+plot_one_decade(get_decade("men", "women", "job", "engall", 1990))
+plot_one_decade(get_decade("men", "women", "job", "engall", 1800))
+plot_one_decade(get_decade("men", "women", "job", "coha", 1990))
 ```
+
 The titles of the plots contain the Pearson coefficient, which is what we use to measure the similarity of the two groups.
+
+Noticing that the 1820 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing certain words.
 ```{r propMissing}
 # Calculate the number of missing group words by decade
 groupmiss_coha <-
@@ -385,7 +387,7 @@ groupmiss2_coha <-
 colnames(groupmiss2_coha) <- colnames(groupwrds)
 
 # Add the year column
-groupmiss2_coha$year <- seq(1820, 2010, by = 10)
+rownames(groupmiss2_coha) <- seq(1820, 2010, by = 10)
 groupmiss2_coha
 
 
@@ -403,7 +405,7 @@ ggplot(groupmiss2_coha, aes(x = year)) +
        color = "Legend") +
   theme_minimal()
 ```
-
+Clearly many fewer words were available in that first decade; let's check for statistical outliers.
 ```{r outliersMissing}
 find_outliers <- function(column, year) {
   is_outlier <-
@@ -421,7 +423,28 @@ outliers_women <-
 outliers_men
 outliers_women
 ```
-
+Since 1820 was an outlier for both men and women, we can safely ignore that decade from COHA.
+```{r meanFunc, echo=FALSE}
+get_ts_averages <- function(group1index,
+                            wordterms,
+                            corpus) {
+  if (corpus == "coha") {
+    years <- seq(1820, 2010, by = 10)
+  } else {
+    years <- seq(1800, 1990, by = 10)
+  }
+  output<-sapply(years, function(year) {
+    mean(get_decade(group1index, "women", wordterms, corpus, year)$grp1ef,
+         na.rm = TRUE)
+  })
+  attr(output, "group1index") <- group1index
+  attr(output, "wordterms") <- wordterms
+  attr(output, "corpus") <- corpus
+  
+  return(output)
+}
+get_ts_averages("men", "agentic", "coha")
+```
 
 ```{r getMagnitudes}
 # Initialize an empty data frame to store results
