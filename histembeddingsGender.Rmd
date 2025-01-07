@@ -361,9 +361,6 @@ We can plot the mac scores for two different groups against each other like so:
 
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
 plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
-# plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
-# plot_one_decade(get_decade("men", "women", "job", "engall", 1990))
-# plot_one_decade(get_decade("men", "women", "job", "coha", 1990))
 ```
 
 The titles of the plots contain the Pearson coefficient, which is what we use to measure the similarity of the two groups.
