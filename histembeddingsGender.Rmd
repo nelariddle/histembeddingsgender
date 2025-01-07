@@ -368,6 +368,7 @@ plot_one_decade(get_decade("men", "women", "job", "coha", 1990))
 ```
 
 The titles of the plots contain the Pearson coefficient, which is what we use to measure the similarity of the two groups.
+
 Noticing that the 1820 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing certain words.
 ```{r propMissing}
 # Calculate the number of missing group words by decade
@@ -387,6 +388,7 @@ colnames(groupmiss2_coha) <- colnames(groupwrds)
 
 # Add the year column
 rownames(groupmiss2_coha) <- seq(1820, 2010, by = 10)
+groupmiss2_coha$year <- seq(1820, 2010, by = 10)
 groupmiss2_coha
 
 

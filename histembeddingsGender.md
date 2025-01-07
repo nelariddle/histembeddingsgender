@@ -29,6 +29,7 @@ agentic <- read_list("agentic.txt", "agentic")
 communal <- read_list("communal.txt", "communal")
 trait <- read_list("traitlist.txt", "trait")
 job <- read_list("joblist.txt", "job")
+# job <- read_list("joblistDOT.txt", "job")
 fruit <- read_list("fruit.txt", "fruit")
 noun <- read_list("nouns.txt", "noun")
 common <- read_list("common.txt", "common")
@@ -49,8 +50,8 @@ head(agentic)
 head(communal)
 ```
 
-    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"   "accommodation"
-    ## [6] "accompany"
+    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"  
+    ## [5] "accommodation" "accompany"
 
 The group word lists were taken from
 <https://pubmed.ncbi.nlm.nih.gov/35787033/>, as well as the trait list:
@@ -66,21 +67,22 @@ head(groupwrds$men)
 head(groupwrds$women)
 ```
 
-    ## [1] "women"      "woman"      "female"     "females"    "feminine"   "femininity"
+    ## [1] "women"      "woman"      "female"     "females"    "feminine"  
+    ## [6] "femininity"
 
 ``` r
 head(trait)
 ```
 
-    ## [1] "able"          "abrupt"        "absentminded"  "abusive"       "accommodating"
-    ## [6] "accurate"
+    ## [1] "able"          "abrupt"        "absentminded"  "abusive"      
+    ## [5] "accommodating" "accurate"
 
 The job titles were scraped off this site:
 <https://spotterful.com/blog/job-description-template/job-titles-list-a-z>,
 and expanded through nearest neighbors
 
-    ## [1] "accompanist"   "accountant"    "actuary"       "actor"         "acupuncturist"
-    ## [6] "adjudicator"
+    ## [1] "accompanist"   "accountant"    "actuary"       "actor"        
+    ## [5] "acupuncturist" "adjudicator"
 
 The workhorse function; it iterates over each decade, computing the MAC
 score between each word and each group, then finds the Pearson
@@ -182,12 +184,41 @@ plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-1.png)<!-- -->
 
 ``` r
-plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
+plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-2.png)<!-- -->
+
+``` r
+plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingDecade-3.png)<!-- -->
+
+``` r
+plot_one_decade(get_decade("men", "women", "job", "engall", 1990))
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingDecade-4.png)<!-- -->
+
+``` r
+plot_one_decade(get_decade("men", "women", "job", "engall", 1800))
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingDecade-5.png)<!-- -->
+
+``` r
+plot_one_decade(get_decade("men", "women", "job", "coha", 1990))
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingDecade-6.png)<!-- -->
+
 The titles of the plots contain the Pearson coefficient, which is what
 we use to measure the similarity of the two groups.
+
+Noticing that the 1820 coha plot had an odd correlation, let’s check the
+proportion of gender words that were available, as this could be skewing
+certain words.
 
 ``` r
 # Calculate the number of missing group words by decade
@@ -206,31 +237,32 @@ groupmiss2_coha <-
 colnames(groupmiss2_coha) <- colnames(groupwrds)
 
 # Add the year column
+rownames(groupmiss2_coha) <- seq(1820, 2010, by = 10)
 groupmiss2_coha$year <- seq(1820, 2010, by = 10)
 groupmiss2_coha
 ```
 
-    ##          men     women     human  nonhuman year
-    ## 1  0.4242424 0.3714286 0.5000000 0.1111111 1820
-    ## 2  0.5757576 0.5714286 0.6428571 0.4444444 1830
-    ## 3  0.6969697 0.6571429 0.6428571 0.6111111 1840
-    ## 4  0.6666667 0.6857143 0.6428571 0.6111111 1850
-    ## 5  0.6969697 0.7142857 0.6428571 0.6666667 1860
-    ## 6  0.6969697 0.7142857 0.7142857 0.6666667 1870
-    ## 7  0.6969697 0.6857143 0.8571429 0.6111111 1880
-    ## 8  0.7272727 0.7142857 0.9285714 0.7222222 1890
-    ## 9  0.7575758 0.6857143 0.9285714 0.6111111 1900
-    ## 10 0.7272727 0.7428571 0.9285714 0.7222222 1910
-    ## 11 0.7878788 0.7428571 0.9285714 0.6111111 1920
-    ## 12 0.8181818 0.6857143 1.0000000 0.7222222 1930
-    ## 13 0.8181818 0.7142857 0.9285714 0.7222222 1940
-    ## 14 0.8181818 0.7142857 0.9285714 0.7222222 1950
-    ## 15 0.7575758 0.7142857 1.0000000 0.8333333 1960
-    ## 16 0.7575758 0.6857143 1.0000000 0.8888889 1970
-    ## 17 0.7878788 0.6571429 1.0000000 0.8888889 1980
-    ## 18 0.7272727 0.6857143 1.0000000 0.8333333 1990
-    ## 19 0.6969697 0.7142857 1.0000000 0.8888889 2000
-    ## 20 0.7575758 0.7142857 1.0000000 0.8333333 2010
+    ##            men     women     human  nonhuman year
+    ## 1820 0.4242424 0.3714286 0.5000000 0.1111111 1820
+    ## 1830 0.5757576 0.5714286 0.6428571 0.4444444 1830
+    ## 1840 0.6969697 0.6571429 0.6428571 0.6111111 1840
+    ## 1850 0.6666667 0.6857143 0.6428571 0.6111111 1850
+    ## 1860 0.6969697 0.7142857 0.6428571 0.6666667 1860
+    ## 1870 0.6969697 0.7142857 0.7142857 0.6666667 1870
+    ## 1880 0.6969697 0.6857143 0.8571429 0.6111111 1880
+    ## 1890 0.7272727 0.7142857 0.9285714 0.7222222 1890
+    ## 1900 0.7575758 0.6857143 0.9285714 0.6111111 1900
+    ## 1910 0.7272727 0.7428571 0.9285714 0.7222222 1910
+    ## 1920 0.7878788 0.7428571 0.9285714 0.6111111 1920
+    ## 1930 0.8181818 0.6857143 1.0000000 0.7222222 1930
+    ## 1940 0.8181818 0.7142857 0.9285714 0.7222222 1940
+    ## 1950 0.8181818 0.7142857 0.9285714 0.7222222 1950
+    ## 1960 0.7575758 0.7142857 1.0000000 0.8333333 1960
+    ## 1970 0.7575758 0.6857143 1.0000000 0.8888889 1970
+    ## 1980 0.7878788 0.6571429 1.0000000 0.8888889 1980
+    ## 1990 0.7272727 0.6857143 1.0000000 0.8333333 1990
+    ## 2000 0.6969697 0.7142857 1.0000000 0.8888889 2000
+    ## 2010 0.7575758 0.7142857 1.0000000 0.8333333 2010
 
 ``` r
 # Create the plot
@@ -246,6 +278,8 @@ ggplot(groupmiss2_coha, aes(x = year)) +
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plotMissing-1.png)<!-- -->
+Clearly many fewer words were available in that first decade; let’s
+check for statistical outliers.
 
 ``` r
 find_outliers <- function(column, year) {
@@ -273,6 +307,20 @@ outliers_women
 
     ##   Decade     Value
     ## 1   1820 0.3714286
+
+Since 1820 was an outlier for both men and women, we can safely ignore
+that decade from COHA.
+
+    ##  [1] 0.084520244 0.036986220 0.017284895 0.001474853 0.018157545 0.001449928
+    ##  [7] 0.022906022 0.023492385 0.029276455 0.045164065 0.047460166 0.048764028
+    ## [13] 0.050883157 0.055722354 0.041074543 0.040904315 0.069172537 0.077888404
+    ## [19] 0.065539308 0.113000601
+    ## attr(,"group1index")
+    ## [1] "men"
+    ## attr(,"wordterms")
+    ## [1] "agentic"
+    ## attr(,"corpus")
+    ## [1] "coha"
 
 ``` r
 # Initialize an empty data frame to store results
