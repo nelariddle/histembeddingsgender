@@ -189,30 +189,6 @@ plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-2.png)<!-- -->
 
-``` r
-plot_one_decade(get_decade("men", "women", "communal", "engall", 1990))
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingDecade-3.png)<!-- -->
-
-``` r
-plot_one_decade(get_decade("men", "women", "job", "engall", 1990))
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingDecade-4.png)<!-- -->
-
-``` r
-plot_one_decade(get_decade("men", "women", "job", "engall", 1800))
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingDecade-5.png)<!-- -->
-
-``` r
-plot_one_decade(get_decade("men", "women", "job", "coha", 1990))
-```
-
-![](histembeddingsGender_files/figure-gfm/plottingDecade-6.png)<!-- -->
-
 The titles of the plots contain the Pearson coefficient, which is what
 we use to measure the similarity of the two groups.
 
