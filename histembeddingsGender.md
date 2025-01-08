@@ -174,6 +174,14 @@ print(mac(
     ##     happy 
     ## 0.4395598
 
+    ## [Download Time Series](./csv_outputs/men_women_agentic_engall.csv)
+
+    ## [Download Time Series](./csv_outputs/men_women_communal_coha.csv)
+
+    ## [Download Time Series](./csv_outputs/men_women_noun_coha.csv)
+
+    ## [Download Time Series](./csv_outputs/nonhuman_women_noun_coha.csv)
+
 We can plot the mac scores for two different groups against each other
 like so:
 
@@ -377,6 +385,12 @@ men_women_trait_job_ts <-
     get_ts("men", "women", "trait", "engall"),
     get_ts("men", "women", "job", "engall")
   )
+```
+
+    ## [Download Time Series](./csv_outputs/men_women_trait_engall.csv) 
+    ## [Download Time Series](./csv_outputs/men_women_job_engall.csv)
+
+``` r
 plot_multiple_ts(men_women_trait_job_ts)
 ```
 
@@ -430,6 +444,12 @@ men_women_agentic_communal_ts <-
     get_ts("men", "women", "agentic", "engall"),
     get_ts("men", "women", "communal", "engall")
   )
+```
+
+    ## [Download Time Series](./csv_outputs/men_women_agentic_engall.csv) 
+    ## [Download Time Series](./csv_outputs/men_women_communal_engall.csv)
+
+``` r
 plot_multiple_ts(men_women_agentic_communal_ts)
 ```
 
@@ -622,16 +642,30 @@ generate_trait_corpus_plot(results_df, "agentic", "engall")
 plot_one_ts(get_ts("nonhuman", "women", "agentic", "coha"))
 ```
 
+    ## [Download Time Series](./csv_outputs/nonhuman_women_agentic_coha.csv)
+
 ![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-1.png)<!-- -->
 
 ``` r
 plot_one_ts(get_ts("nonhuman", "men", "communal", "coha"))
 ```
 
+    ## [Download Time Series](./csv_outputs/nonhuman_men_communal_coha.csv)
+
 ![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-2.png)<!-- -->
 
 ``` r
 human_nonhuman_ts<-list(get_ts("nonhuman", "women", "trait", "coha"),get_ts("nonhuman", "men", "trait", "coha"), get_ts("nonhuman", "women", "trait", "engall"),get_ts("nonhuman", "men", "trait", "engall"),get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "trait", "coha"))
+```
+
+    ## [Download Time Series](./csv_outputs/nonhuman_women_trait_coha.csv) 
+    ## [Download Time Series](./csv_outputs/nonhuman_men_trait_coha.csv) 
+    ## [Download Time Series](./csv_outputs/nonhuman_women_trait_engall.csv) 
+    ## [Download Time Series](./csv_outputs/nonhuman_men_trait_engall.csv) 
+    ## [Download Time Series](./csv_outputs/men_women_trait_engall.csv) 
+    ## [Download Time Series](./csv_outputs/men_women_trait_coha.csv)
+
+``` r
 plot_multiple_ts(human_nonhuman_ts)
 ```
 

@@ -236,11 +236,38 @@ get_data_internal <- function(group1index,
   
   return(output)
 }
+# get_ts <- function(group1index,
+#                    group2index,
+#                    wordterms,
+#                    corpus) {
+#   get_data_internal(group1index, group2index, wordterms, corpus)
+# }
+
 get_ts <- function(group1index,
                    group2index,
                    wordterms,
                    corpus) {
-  get_data_internal(group1index, group2index, wordterms, corpus)
+  data <- get_data_internal(group1index, group2index, wordterms, corpus)
+  # Create a file path for the CSV
+  # Define the folder for saving CSV files
+  csv_folder <- "csv_outputs"
+  
+  # Create the folder if it doesn't exist
+  if (!dir.exists(csv_folder)) {
+    dir.create(csv_folder)
+  }
+  csv_path <- paste0("csv_outputs/",
+                     paste(group1index, group2index, wordterms, corpus, sep = "_"),
+                     ".csv")
+  
+  # Save the time series data to CSV
+  write.csv(data, file = csv_path, row.names = FALSE)
+  
+  # Generate markdown link for download
+  download_link <-
+    paste0("[Download Time Series](./", csv_path, ")")
+  cat(download_link, "\n")  # Output the markdown link to the console
+  return(data)
 }
 get_decade <-
   function(group1index,
