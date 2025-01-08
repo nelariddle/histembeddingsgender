@@ -508,8 +508,8 @@ get_ts_averages <- function(group1index,
   
   return(output)
 }
-get_ts_averages("men", "agentic", "coha")
 ```
+
 ```{r plottingMeans}
 plot_multiple_ts_averages <- function(ts_list) {
   combined_df <- data.frame()
@@ -524,7 +524,6 @@ plot_multiple_ts_averages <- function(ts_list) {
     )
     combined_df <- rbind(combined_df, ts_df)
   }
-  combined_df
   p <-
     ggplot(combined_df, aes(
       x = Year,
