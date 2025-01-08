@@ -540,7 +540,8 @@ plot_multiple_ts_averages <- function(ts_list) {
   return(p)
 }
 ```
-```{r plottingTsMenWomen}
+
+```{r plottingTsMenWomenAverages}
 men_women_trait_job_ts <-
   list(
     get_ts_averages("men", "agentic", "engall"),
