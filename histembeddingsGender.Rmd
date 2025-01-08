@@ -515,6 +515,8 @@ men_women_agentic_communal_ts <-
 plot_multiple_ts(men_women_agentic_communal_ts)
 
 ```
+[Download Time Series](./csv_outputs/men_women_agentic_engall.csv) 
+
 Now, let's look at the actual magnitudes of the mac scores.
 ```{r meanFunc, echo=FALSE}
 get_ts_averages <- function(group1index,

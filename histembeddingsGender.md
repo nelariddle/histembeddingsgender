@@ -496,6 +496,8 @@ plot_multiple_ts(men_women_agentic_communal_ts)
     ## 40 1990 0.8951673    men  women  communal engall
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-2.png)<!-- -->
+[Download Time Series](./csv_outputs/men_women_agentic_engall.csv)
+
 Now, let’s look at the actual magnitudes of the mac scores.
 
 ``` r
