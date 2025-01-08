@@ -478,17 +478,6 @@ plot_multiple_ts(men_women_agentic_communal_ts)
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-2.png)<!-- -->
 Now, let’s look at the actual magnitudes of the mac scores.
 
-    ##  [1] 0.084520244 0.036986220 0.017284895 0.001474853 0.018157545
-    ##  [6] 0.001449928 0.022906022 0.023492385 0.029276455 0.045164065
-    ## [11] 0.047460166 0.048764028 0.050883157 0.055722354 0.041074543
-    ## [16] 0.040904315 0.069172537 0.077888404 0.065539308 0.113000601
-    ## attr(,"group1index")
-    ## [1] "men"
-    ## attr(,"wordterms")
-    ## [1] "agentic"
-    ## attr(,"corpus")
-    ## [1] "coha"
-
 ``` r
 plot_multiple_ts_averages <- function(ts_list) {
   combined_df <- data.frame()
@@ -503,7 +492,6 @@ plot_multiple_ts_averages <- function(ts_list) {
     )
     combined_df <- rbind(combined_df, ts_df)
   }
-  combined_df
   p <-
     ggplot(combined_df, aes(
       x = Year,
