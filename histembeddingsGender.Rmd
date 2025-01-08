@@ -266,7 +266,7 @@ get_ts <- function(group1index,
   # Generate markdown link for download
   download_link <-
     paste0("[Download Time Series](./", csv_path, ")")
-  cat(download_link, "\n")  # Output the markdown link to the console
+  # cat(download_link, "\n")  # Output the markdown link to the console
   return(data)
 }
 get_decade <-
