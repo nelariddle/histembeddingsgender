@@ -403,6 +403,16 @@ the trait list:</p>
 <p>The job titles were scraped off this site: <a href="https://spotterful.com/blog/job-description-template/job-titles-list-a-z" class="uri">https://spotterful.com/blog/job-description-template/job-titles-list-a-z</a>,
 and expanded through nearest neighbors</p>
 <pre><code>## [1] &quot;accompanist&quot;   &quot;accountant&quot;    &quot;actuary&quot;       &quot;actor&quot;         &quot;acupuncturist&quot; &quot;adjudicator&quot;</code></pre>
+<pre class="r"><code>unavwords &lt;- lapply(wordvecs.dat, function(x)
+  rownames(x)[which(x$V1 == 0)])
+n_avwords &lt;- sapply(wordvecs.dat, function(x)
+  length(x$V1) - length(rownames(x)[which(x$V1 == 0)]))
+
+unavwords_coha &lt;- lapply(wordvecs.dat_coha, function(x)
+  rownames(x)[which(x$V1 == 0)])
+n_avwords_coha &lt;- sapply(wordvecs.dat_coha, function(x)
+  length(x$V1) - length(rownames(x)[which(x$V1 == 0)])
+)</code></pre>
 <p>The workhorse function; it iterates over each decade, computing the
 MAC score between each word and each group, then finds the Pearson
 correlation of the resulting lists (demonstrated visually later)</p>

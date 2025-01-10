@@ -84,14 +84,17 @@ head(job)
 if (!exists("wordvecs.dat", envir = .GlobalEnv)) {
   load("engall/wordvecsdata_engall.RData", envir = .GlobalEnv)
 }
+if (!exists("wordvecs.dat_coha", envir = .GlobalEnv)) {
+  load("coha/wordvecsdata_coha.RData", envir = .GlobalEnv)
+}
+```
+
+```{r unavwords}
 unavwords <- lapply(wordvecs.dat, function(x)
   rownames(x)[which(x$V1 == 0)])
 n_avwords <- sapply(wordvecs.dat, function(x)
   length(x$V1) - length(rownames(x)[which(x$V1 == 0)]))
 
-if (!exists("wordvecs.dat_coha", envir = .GlobalEnv)) {
-  load("coha/wordvecsdata_coha.RData", envir = .GlobalEnv)
-}
 unavwords_coha <- lapply(wordvecs.dat_coha, function(x)
   rownames(x)[which(x$V1 == 0)])
 n_avwords_coha <- sapply(wordvecs.dat_coha, function(x)
