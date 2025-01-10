@@ -701,12 +701,15 @@ men_women_trait_job_ts <-
   )
 plot_multiple_ts_averages(men_women_trait_job_ts)
 ```
+Access the files containing all the data, which can be filtered in excel:
 ```{r overallCSV}
+head(overall_results)
 write_xlsx(overall_results, "overall_results.xlsx")
 ```
 [overall_results.xlsx](overall_results.xlsx)
 
 ```{r overallCSVaverages}
+head(overall_results_averages)
 write_xlsx(overall_results_averages, "overall_results_averages.xlsx")
 ```
 [overall_results_averages.xlsx](overall_results_averages.xlsx)

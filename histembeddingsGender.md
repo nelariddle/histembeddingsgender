@@ -469,12 +469,38 @@ plot_multiple_ts_averages(men_women_trait_job_ts)
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomenAveragesCoha-1.png)<!-- -->
+Access the files containing all the data, which can be filtered in
+excel:
+
+``` r
+head(overall_results)
+```
+
+    ##   year     value group1index group2index wordterms corpus
+    ## 1 1800 0.7608427         men       women   agentic engall
+    ## 2 1810 0.7966443         men       women   agentic engall
+    ## 3 1820 0.7896832         men       women   agentic engall
+    ## 4 1830 0.7644530         men       women   agentic engall
+    ## 5 1840 0.7750871         men       women   agentic engall
+    ## 6 1850 0.7651039         men       women   agentic engall
 
 ``` r
 write_xlsx(overall_results, "overall_results.xlsx")
 ```
 
 [overall_results.xlsx](overall_results.xlsx)
+
+``` r
+head(overall_results_averages)
+```
+
+    ##   year       value group1index wordterms corpus
+    ## 1 1800 0.017776823         men   agentic engall
+    ## 2 1810 0.013167537         men   agentic engall
+    ## 3 1820 0.004411563         men   agentic engall
+    ## 4 1830 0.008945463         men   agentic engall
+    ## 5 1840 0.003948094         men   agentic engall
+    ## 6 1850 0.011462237         men   agentic engall
 
 ``` r
 write_xlsx(overall_results_averages, "overall_results_averages.xlsx")
