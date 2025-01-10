@@ -50,8 +50,7 @@ head(agentic)
 head(communal)
 ```
 
-    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"   "accommodation"
-    ## [6] "accompany"
+    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"   "accommodation" "accompany"
 
 The group word lists were taken from
 <https://pubmed.ncbi.nlm.nih.gov/35787033/>, as well as the trait list:
@@ -72,15 +71,13 @@ head(groupwrds$women)
 head(trait)
 ```
 
-    ## [1] "able"          "abrupt"        "absentminded"  "abusive"       "accommodating"
-    ## [6] "accurate"
+    ## [1] "able"          "abrupt"        "absentminded"  "abusive"       "accommodating" "accurate"
 
 The job titles were scraped off this site:
 <https://spotterful.com/blog/job-description-template/job-titles-list-a-z>,
 and expanded through nearest neighbors
 
-    ## [1] "accompanist"   "accountant"    "actuary"       "actor"         "acupuncturist"
-    ## [6] "adjudicator"
+    ## [1] "accompanist"   "accountant"    "actuary"       "actor"         "acupuncturist" "adjudicator"
 
 The workhorse function; it iterates over each decade, computing the MAC
 score between each word and each group, then finds the Pearson
@@ -470,8 +467,6 @@ men_women_trait_job_ts <-
   )
 plot_multiple_ts_averages(men_women_trait_job_ts)
 ```
-
-    ## Warning: Removed 6 rows containing missing values (`geom_line()`).
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomenAveragesCoha-1.png)<!-- -->
 
