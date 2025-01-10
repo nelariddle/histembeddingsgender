@@ -7,7 +7,8 @@ output:
 date: December 3, 2024
 author: Nela Riddle
 ---
-  
+[Visit the original repository on GitHub](https://github.com/nelariddle/histembeddingsgender)
+
 ```{r loadPackages, echo = FALSE, message=FALSE, warning=FALSE}
 ########################################################
 
