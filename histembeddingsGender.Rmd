@@ -1,6 +1,9 @@
 ---
 title: "Tran_Riddle_Historical Embeddings"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 date: December 3, 2024
 author: Nela Riddle
 ---
@@ -30,6 +33,7 @@ if (!require("writexl")) {install.packages("writexl");require(sweater)}
 # see: https://rdrr.io/github/chainsawriot/sweater/f/README.md
 ```
 
+### Setup
 First, load in the pre-written group and word lists to be used in analyses:
 ```{r loadWords, include=TRUE, warning=FALSE}
 ## Load in data ----
@@ -98,6 +102,7 @@ n_avwords_coha <- sapply(wordvecs.dat_coha, function(x)
   length(x$V1) - length(rownames(x)[which(x$V1 == 0)])
 )
 ```
+### Producing the mac scores
 The workhorse function; it iterates over each decade, computing the MAC score between each word and each group, then finds the Pearson correlation of the resulting lists (demonstrated visually later)
 ```{r importantFunction, message=FALSE}
 grpwrdassoc_rel <-
@@ -172,8 +177,6 @@ print(mac(
 ```
 
 ```{r helperFunctions, echo = FALSE, message = FALSE}
-
-
 overall_results <- data.frame()
 
 generate_data <- function(group1index,
@@ -213,34 +216,6 @@ generate_data <- function(group1index,
   
   return(output)
 }
-# get_data_internal <- function(group1index,
-#                               group2index,
-#                               wordterms,
-#                               corpus,
-#                               decade = NULL) {
-#   data <- generate_data(
-#     group1index = group1index,
-#     group2index = group2index,
-#     wordterms = wordterms,
-#     corpus = corpus
-#   )
-#   if (is.null(decade)) {
-#     output <- data[[2]]
-#   } else {
-#     if (corpus == "coha") {
-#       output <- data[[1]][[(decade - 1810) / 10]]
-#     } else{
-#       output <- data[[1]][[(decade - 1790) / 10]]
-#     }
-#     attr(output, "decade") <- decade
-#   }
-#   attr(output, "group1index") <- group1index
-#   attr(output, "group2index") <- group2index
-#   attr(output, "wordterms") <- wordterms
-#   attr(output, "corpus") <- corpus
-#
-#   return(output)
-# }
 
 get_data_internal <- function(group1index,
                               group2index,
@@ -430,6 +405,7 @@ plot_one_decade <- function(decade_data) {
 }
 
 ```
+### Looking at a decade
 We can plot the mac scores for two different groups against each other like so:
 
 ```{r plottingDecade, warning=FALSE}
@@ -439,6 +415,7 @@ plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 
 The titles of the plots contain the Pearson coefficient, which is what we will use to measure the similarity of the two groups.
 
+### Outlier analysis
 Noticing that the 1820 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing the slope.
 ```{r propMissingCoha}
 # Calculate the number of missing group words by decade
@@ -539,6 +516,8 @@ outliers_men
 outliers_women
 ```
 Engall has no outliers, as expected.
+
+### Plots, engall
 
 Now we can begin to plot the actual correlation values over time, starting with engall:
 ```{r plottingTsMenWomen}
@@ -659,6 +638,8 @@ men_women_trait_job_ts <-
 plot_multiple_ts_averages(men_women_trait_job_ts)
 ```
 
+### Baseline with nonhuman groups
+
 We can also do a baseline test with different groups to see if the men/women correlations are uniquely high.
 ```{r plottingTsHumanNonhuman}
 human_nonhuman_ts <-
@@ -675,6 +656,8 @@ plot_multiple_ts(human_nonhuman_ts)
 plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1890))
 
 ```
+
+### Plots, coha
 ```{r plottingTsMenWomenCoha}
 men_women_trait_job_ts <-
   list(
@@ -691,6 +674,7 @@ men_women_agentic_communal_ts <-
 plot_multiple_ts(men_women_agentic_communal_ts)
 
 ```
+
 ```{r plottingTsMenWomenAveragesCoha}
 men_women_trait_job_ts <-
   list(
@@ -702,6 +686,7 @@ men_women_trait_job_ts <-
 plot_multiple_ts_averages(men_women_trait_job_ts)
 ```
 
+### Data in excel format
 Access the files containing all the data, which can be filtered in excel:
 ```{r overallCSV}
 head(overall_results)
