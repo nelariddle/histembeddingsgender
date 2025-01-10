@@ -364,15 +364,7 @@ plot_multiple_ts <- function(ts_list) {
   for (i in seq_along(ts_list)) {
     ts_data <- ts_list[[i]]
     ts_df <- data.frame(
-      Year = if (attr(ts_data, "corpus") == "engall") {
-        seq(from = 1800,
-            to = 1990,
-            by = 10)
-      } else {
-        seq(from = 1820,
-            to = 2010,
-            by = 10)
-      },
+      Year = as.vector(time(ts_data)),
       Value = as.vector(ts_data),
       group1 = attr(ts_data, "group1index"),
       group2 = attr(ts_data, "group2index"),
@@ -625,8 +617,9 @@ plot_multiple_ts_averages <- function(ts_list) {
   combined_df <- data.frame()
   for (i in seq_along(ts_list)) {
     ts_data <- ts_list[[i]]
+    # print(as.vector(time(ts_data)))
     ts_df <- data.frame(
-      Year = seq(from = 1800, to = 1990, by = 10),
+      Year = as.vector(time(ts_data)),
       Value = as.vector(ts_data),
       group1 = attr(ts_data, "group1index"),
       word_term = attr(ts_data, "wordterms"),
@@ -634,6 +627,11 @@ plot_multiple_ts_averages <- function(ts_list) {
     )
     combined_df <- rbind(combined_df, ts_df)
   }
+
+  
+  y_min <- min(min(combined_df$Value, na.rm = TRUE), -.1)
+  y_max <- max(max(combined_df$Value, na.rm = TRUE), .1)
+  
   p <-
     ggplot(combined_df, aes(
       x = Year,
@@ -642,8 +640,8 @@ plot_multiple_ts_averages <- function(ts_list) {
     )) +
     geom_line() +
     labs(title = "Multiple Time Series Plot, Averages", x = "Year", y = "Similarity Coefficient") +
-    facet_wrap( ~ word_term, scales = "fixed") +
-    scale_y_continuous(limits = c(-.1, .1)) +
+    facet_wrap(~ word_term, scales = "fixed") +
+    scale_y_continuous(limits = c(y_min, y_max)) +
     theme_minimal() + guides(color = guide_legend(title = NULL))
   
   return(p)
