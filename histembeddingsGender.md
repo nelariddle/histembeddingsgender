@@ -469,6 +469,7 @@ plot_multiple_ts_averages(men_women_trait_job_ts)
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomenAveragesCoha-1.png)<!-- -->
+
 Access the files containing all the data, which can be filtered in
 excel:
 
