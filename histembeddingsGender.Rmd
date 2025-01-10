@@ -25,6 +25,7 @@ if (!require("dplyr")) {install.packages("dplyr", dependencies = TRUE);require(d
 if (!require("devtools")) {install.packages("devtools", dependencies = TRUE);require(devtools)}
 # if (!require("sweater")) {devtools::install_github("chainsawriot/sweater");require(sweater)} 
 if (!require("sweater")) {install.packages("sweater");require(sweater)} 
+if (!require("writexl")) {install.packages("writexl");require(sweater)} 
 # contains convenience functions for embeddings analyses 
 # see: https://rdrr.io/github/chainsawriot/sweater/f/README.md
 ```
@@ -158,7 +159,7 @@ An example of how the mac function works (using engall 1990); here we compute th
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
   S = c("elephant", "horse", "tiger", "happy", "weird", "car"),
-  A = c("dog", "cat", "turtle", "fish", "monkey")
+  A = c("dog", "cat", "turtle", "fish", "monkey") # the "group" words
 )$P)
 ```
 You can compute the cosine similarity of any two words by replacing the lists with single words.
@@ -171,6 +172,10 @@ print(mac(
 ```
 
 ```{r helperFunctions, echo = FALSE, message = FALSE}
+
+
+overall_results <- data.frame()
+
 generate_data <- function(group1index,
                           group2index,
                           wordterms,
@@ -208,67 +213,107 @@ generate_data <- function(group1index,
   
   return(output)
 }
+# get_data_internal <- function(group1index,
+#                               group2index,
+#                               wordterms,
+#                               corpus,
+#                               decade = NULL) {
+#   data <- generate_data(
+#     group1index = group1index,
+#     group2index = group2index,
+#     wordterms = wordterms,
+#     corpus = corpus
+#   )
+#   if (is.null(decade)) {
+#     output <- data[[2]]
+#   } else {
+#     if (corpus == "coha") {
+#       output <- data[[1]][[(decade - 1810) / 10]]
+#     } else{
+#       output <- data[[1]][[(decade - 1790) / 10]]
+#     }
+#     attr(output, "decade") <- decade
+#   }
+#   attr(output, "group1index") <- group1index
+#   attr(output, "group2index") <- group2index
+#   attr(output, "wordterms") <- wordterms
+#   attr(output, "corpus") <- corpus
+#
+#   return(output)
+# }
+
 get_data_internal <- function(group1index,
                               group2index,
                               wordterms,
                               corpus,
                               decade = NULL) {
+  # Generate the data
   data <- generate_data(
     group1index = group1index,
     group2index = group2index,
     wordterms = wordterms,
     corpus = corpus
   )
+  
+  # Select the output based on the `decade`
   if (is.null(decade)) {
     output <- data[[2]]
+    
+    # Convert the output to a data frame
+    years <- time(output)
+    values <- as.numeric(output)
+    
+    new_entry <- data.frame(
+      year = years,
+      value = values,
+      group1index = group1index,
+      group2index = group2index,
+      wordterms = wordterms,
+      corpus = corpus
+    )
+    
+    
+    # Check if the combination already exists in the data frame
+    existing <- overall_results %>%
+      filter(
+        group1index == !!group1index,
+        group2index == !!group2index,
+        wordterms == !!wordterms,
+        corpus == !!corpus
+      )
+    
+    # Append to the global results data frame only if the combination is new
+    if (nrow(existing) == 0) {
+      overall_results <<- bind_rows(overall_results, new_entry)
+    }
   } else {
     if (corpus == "coha") {
       output <- data[[1]][[(decade - 1810) / 10]]
-    } else{
+    } else {
       output <- data[[1]][[(decade - 1790) / 10]]
     }
     attr(output, "decade") <- decade
   }
+  
+  # Attach additional attributes
   attr(output, "group1index") <- group1index
   attr(output, "group2index") <- group2index
   attr(output, "wordterms") <- wordterms
   attr(output, "corpus") <- corpus
   
+  
+  # Return the output regardless
   return(output)
 }
-# get_ts <- function(group1index,
-#                    group2index,
-#                    wordterms,
-#                    corpus) {
-#   get_data_internal(group1index, group2index, wordterms, corpus)
-# }
+
 
 get_ts <- function(group1index,
                    group2index,
                    wordterms,
                    corpus) {
-  data <- get_data_internal(group1index, group2index, wordterms, corpus)
-  # Create a file path for the CSV
-  # Define the folder for saving CSV files
-  csv_folder <- "csv_outputs"
-  
-  # Create the folder if it doesn't exist
-  if (!dir.exists(csv_folder)) {
-    dir.create(csv_folder)
-  }
-  csv_path <- paste0("csv_outputs/",
-                     paste(group1index, group2index, wordterms, corpus, sep = "_"),
-                     ".csv")
-  
-  # Save the time series data to CSV
-  write.csv(data, file = csv_path, row.names = FALSE)
-  
-  # Generate markdown link for download
-  download_link <-
-    paste0("[Download Time Series](./", csv_path, ")")
-  # cat(download_link, "\n")  # Output the markdown link to the console
-  return(data)
+  get_data_internal(group1index, group2index, wordterms, corpus)
 }
+
 get_decade <-
   function(group1index,
            group2index,
@@ -277,6 +322,7 @@ get_decade <-
            decade) {
     get_data_internal(group1index, group2index, wordterms, corpus, decade = decade)
   }
+
 ```
 
 ```{r sampleCalls, echo = FALSE}
@@ -319,9 +365,13 @@ plot_multiple_ts <- function(ts_list) {
     ts_data <- ts_list[[i]]
     ts_df <- data.frame(
       Year = if (attr(ts_data, "corpus") == "engall") {
-        seq(from = 1800, to = 1990, by = 10)
+        seq(from = 1800,
+            to = 1990,
+            by = 10)
       } else {
-        seq(from = 1820, to = 2010, by = 10)
+        seq(from = 1820,
+            to = 2010,
+            by = 10)
       },
       Value = as.vector(ts_data),
       group1 = attr(ts_data, "group1index"),
@@ -331,7 +381,8 @@ plot_multiple_ts <- function(ts_list) {
     )
     combined_df <- rbind(combined_df, ts_df)
   }
-  print(combined_df)
+  y_min <- min(min(combined_df$Value, na.rm = TRUE), 0)
+  y_max <- max(max(combined_df$Value, na.rm = TRUE), 1)
   p <-
     ggplot(combined_df, aes(
       x = Year,
@@ -339,9 +390,9 @@ plot_multiple_ts <- function(ts_list) {
       color = interaction(group1, group2, word_term)
     )) +
     geom_line() +
-    labs(title = "Multiple Time Series Plot", x = "Year", y = "Similarity Coefficient") +
-    facet_wrap(~ corpus, scales = "fixed") +
-    scale_y_continuous(limits = c(0, 1)) +
+    labs(title = "Multiple Time Series Plot, Correlations", x = "Year", y = "Similarity Coefficient") +
+    facet_wrap( ~ corpus, scales = "fixed") +
+    scale_y_continuous(limits = c(y_min, y_max)) +
     theme_minimal() + guides(color = guide_legend(title = NULL))
   
   return(p)
@@ -390,14 +441,13 @@ plot_one_decade <- function(decade_data) {
 We can plot the mac scores for two different groups against each other like so:
 
 ```{r plottingDecade, warning=FALSE}
-
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
 plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 ```
 
-The titles of the plots contain the Pearson coefficient, which is what we use to measure the similarity of the two groups.
+The titles of the plots contain the Pearson coefficient, which is what we will use to measure the similarity of the two groups.
 
-Noticing that the 1820 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing certain words.
+Noticing that the 1820 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing the slope.
 ```{r propMissingCoha}
 # Calculate the number of missing group words by decade
 groupmiss_coha <-
@@ -515,10 +565,11 @@ men_women_agentic_communal_ts <-
 plot_multiple_ts(men_women_agentic_communal_ts)
 
 ```
-[Download Time Series](./csv_outputs/men_women_agentic_engall.csv) 
 
-Now, let's look at the actual magnitudes of the mac scores.
+Now, let's look at the actual magnitudes of the mac scores (rather than the Pearson correlations). To do this, we take the mean of all mac scores with a single group.
 ```{r meanFunc, echo=FALSE}
+overall_results_averages<-data.frame()
+
 get_ts_averages <- function(group1index,
                             wordterms,
                             corpus) {
@@ -531,6 +582,36 @@ get_ts_averages <- function(group1index,
     mean(get_decade(group1index, "women", wordterms, corpus, year)$grp1ef,
          na.rm = TRUE)
   })
+  
+  output <-
+    ts(output,
+       start = min(years),
+       frequency = 1 / (years[2] - years[1]))
+  
+  years <- time(output)
+  values <- as.numeric(output)
+  
+  new_entry <- data.frame(
+    year = years,
+    value = values,
+    group1index = group1index,
+    wordterms = wordterms,
+    corpus = corpus
+  )
+  
+  
+  # Check if the combination already exists in the data frame
+  existing <- overall_results_averages %>%
+    filter(group1index == !!group1index,
+           wordterms == !!wordterms,
+           corpus == !!corpus)
+  
+  # Append to the global results data frame only if the combination is new
+  if (nrow(existing) == 0) {
+    overall_results_averages <<- bind_rows(overall_results_averages, new_entry)
+  }
+  
+  
   attr(output, "group1index") <- group1index
   attr(output, "wordterms") <- wordterms
   attr(output, "corpus") <- corpus
@@ -539,7 +620,7 @@ get_ts_averages <- function(group1index,
 }
 ```
 
-```{r plottingMeans}
+```{r plottingMeans, echo = FALSE}
 plot_multiple_ts_averages <- function(ts_list) {
   combined_df <- data.frame()
   for (i in seq_along(ts_list)) {
@@ -560,7 +641,7 @@ plot_multiple_ts_averages <- function(ts_list) {
       color = interaction(group1, word_term)
     )) +
     geom_line() +
-    labs(title = "Multiple Time Series Plot", x = "Year", y = "Similarity Coefficient") +
+    labs(title = "Multiple Time Series Plot, Averages", x = "Year", y = "Similarity Coefficient") +
     facet_wrap( ~ word_term, scales = "fixed") +
     scale_y_continuous(limits = c(-.1, .1)) +
     theme_minimal() + guides(color = guide_legend(title = NULL))
@@ -580,82 +661,54 @@ men_women_trait_job_ts <-
 plot_multiple_ts_averages(men_women_trait_job_ts)
 ```
 
-```{r getMagnitudes}
-# Initialize an empty data frame to store results
-results_df <- data.frame()
-
-# Define the parameters to iterate over
-categories <- c("agentic", "communal")
-corpora <- c("coha", "engall")
-years <- seq(1800, 2010, by = 10)
-
-# Loop through each year
-for (year in years) {
-  # Create a temporary vector to store the values for the current year
-  temp_row <- c(year)
-  
-  # Loop through each combination of trait and corpus
-  for (category in categories) {
-    for (corpus in corpora) {
-      if ((year >= 1820 & corpus == "coha") | (year <= 1990 & corpus == "engall")) {
-        df <- get_decade("men", "women", category, corpus, year)
-        mean_men <- mean(df$grp1ef, na.rm = TRUE)
-        mean_women <- mean(df$grp2ef, na.rm = TRUE)
-        temp_row <- c(temp_row, mean_men, mean_women)
-      } else{
-        temp_row <- c(temp_row, NaN, NaN)
-      }
-    }
-  }
-  results_df <- rbind(results_df, temp_row)
-}
-
-# Set the column names for the results data frame
-colnames(results_df) <- c(
-  "year",
-  "agentic_coha_men", "agentic_coha_women",
-  "agentic_engall_men", "agentic_engall_women",
-  "communal_coha_men", "communal_coha_women",
-  "communal_engall_men", "communal_engall_women"
-)
-
-# Display the results
-generate_trait_corpus_plot <- function(data, trait, corpus) {
-  # Dynamically generate column names
-  y_men <- paste0(trait, "_", corpus, "_men")
-  y_women <- paste0(trait, "_", corpus, "_women")
-  
-  # Generate title
-  title <- paste(trait, corpus, sep = ", ")
-  
-  # Create the plot
-  ggplot(data, aes(x = year)) +
-    geom_line(aes_string(y = y_men, color = "'Men'")) +
-    geom_line(aes_string(y = y_women, color = "'Women'")) +
-    labs(
-      title = title,
-      x = "Year",
-      y = "Mean Values",
-      color = "Group"
-    ) +
-    theme_minimal() +
-    scale_color_manual(values = c("Men" = "blue", "Women" = "red"))
-}
-
-generate_trait_corpus_plot(results_df, "communal", "coha")
-generate_trait_corpus_plot(results_df, "agentic", "coha")
-generate_trait_corpus_plot(results_df, "communal", "engall")
-generate_trait_corpus_plot(results_df, "agentic", "engall")
-
-```
-
+We can also do a baseline test with different groups to see if the men/women correlations are uniquely high.
 ```{r plottingTsHumanNonhuman}
-plot_one_ts(get_ts("nonhuman", "women", "agentic", "coha"))
-plot_one_ts(get_ts("nonhuman", "men", "communal", "coha"))
-
-human_nonhuman_ts<-list(get_ts("nonhuman", "women", "trait", "coha"),get_ts("nonhuman", "men", "trait", "coha"), get_ts("nonhuman", "women", "trait", "engall"),get_ts("nonhuman", "men", "trait", "engall"),get_ts("men", "women", "trait", "engall"),get_ts("men", "women", "trait", "coha"))
+human_nonhuman_ts <-
+  list(
+    get_ts("nonhuman", "women", "trait", "coha"),
+    get_ts("nonhuman", "men", "trait", "coha"),
+    get_ts("nonhuman", "women", "trait", "engall"),
+    get_ts("nonhuman", "men", "trait", "engall"),
+    get_ts("men", "women", "trait", "engall"),
+    get_ts("men", "women", "trait", "coha")
+  )
 plot_multiple_ts(human_nonhuman_ts)
 
-plot_one_decade(get_decade("nonhuman", "women", "trait", "coha", 2010))
+plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1890))
 
+```
+```{r plottingTsMenWomenCoha}
+men_women_trait_job_ts <-
+  list(
+    get_ts("men", "women", "trait", "coha"),
+    get_ts("men", "women", "job", "coha")
+  )
+plot_multiple_ts(men_women_trait_job_ts)
+
+men_women_agentic_communal_ts <-
+  list(
+    get_ts("men", "women", "agentic", "coha"),
+    get_ts("men", "women", "communal", "coha")
+  )
+plot_multiple_ts(men_women_agentic_communal_ts)
+
+```
+```{r plottingTsMenWomenAveragesCoha}
+men_women_trait_job_ts <-
+  list(
+    get_ts_averages("men", "agentic", "coha"),
+    get_ts_averages("men", "communal", "coha"),
+    get_ts_averages("women", "agentic", "coha"),
+    get_ts_averages("women", "communal", "coha")
+  )
+plot_multiple_ts_averages(men_women_trait_job_ts)
+```
+```{r overallCSV}
+overall_results
+write_xlsx(overall_results, "overall_results.xlsx")
+```
+
+```{r overallCSVaverages}
+overall_results_averages
+write_xlsx(overall_results_averages, "overall_results_averages.xlsx")
 ```
