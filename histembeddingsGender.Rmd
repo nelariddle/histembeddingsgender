@@ -655,6 +655,8 @@ human_nonhuman_ts <-
 plot_multiple_ts(human_nonhuman_ts)
 
 plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1890))
+plot_one_decade(get_decade("nonhuman", "men", "trait", "coha", 1980))
+
 
 ```
 
@@ -700,3 +702,65 @@ head(overall_results_averages)
 write_xlsx(overall_results_averages, "overall_results_averages.xlsx")
 ```
 [overall_results_averages.xlsx](overall_results_averages.xlsx)
+
+
+```{r freqData, echo=FALSE, warning=FALSE}
+setwd("wordstim") # set to wordstim folder or where you want to save the data
+
+traitextradat <- read.csv("traitextradat.csv", header = TRUE)
+freqavg_dat <- read.csv("freqav_dat.csv", header = TRUE)
+freqavg_dat <- freqavg_dat %>%
+  rename(
+    trait = X,      # Rename "X" to "trait"
+    freq = freq,    # Keep "freq" as it is
+    word = word     # Keep "word" as it is
+  )
+setwd("..")
+```
+
+### Frequency visualized
+
+```{r freqPlotting, warning=FALSE}
+plot_one_decade_shaded <- function(decade_data) {
+  # Extract attributes
+  group1 <- attr(decade_data, "group1index")
+  group2 <- attr(decade_data, "group2index")
+  word_term <- attr(decade_data, "wordterms")
+  corpus <- attr(decade_data, "corpus")
+  decade <- attr(decade_data, "decade")
+  # Calculate Pearson correlation
+  pearson_corr <-
+    cor(decade_data$grp1ef, decade_data$grp2ef, use = "complete.obs")
+  decade_data <- merge(decade_data, freqavg_dat, by = "trait", all.x = TRUE)
+
+  # Create title
+  title <- paste0(
+    group1,
+    " vs ",
+    group2,
+    ", ",
+    word_term,
+    " (",
+    corpus,
+    ", ",
+    decade,
+    ", r = ",
+    round(pearson_corr, 2),
+    ")"
+  )
+  # Create plot with freq shading
+  p <-
+    decade_data %>% ggplot(aes(x = grp1ef, y = grp2ef, color = log10(freq))) +
+    geom_point() +
+    geom_smooth(method = "lm", formula = y ~ x) +
+    geom_text(aes(label = trait), vjust = -0.5, size = 3) +
+    scale_color_gradient(low = "darkblue",
+                         high = "darkred",
+                         name = "log(Frequency)") +
+    labs(title = title, x = group1, y = group2) +
+    theme_minimal()
+  
+  return(p)
+}
+plot_one_decade_shaded(get_decade("men", "women", "communal", "engall", 1990))
+```
