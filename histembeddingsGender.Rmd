@@ -58,18 +58,18 @@ groupwrds <- groupwrds[-1, ]
 agentic <- read_list("agentic.txt", "agentic")
 communal <- read_list("communal.txt", "communal")
 trait <- read_list("traitlist.txt", "trait")
-job <- read_list("joblist.txt", "job")
-# job <- read_list("joblistDOT.txt", "job")
-fruit <- read_list("fruit.txt", "fruit")
+# job <- read_list("joblist.txt", "job")
+job <- read_list("joblistDOT.txt", "job")
 noun <- read_list("nouns.txt", "noun")
 common <- read_list("common.txt", "common")
+chore <- read_list("chore.txt", "chore")
+
+setwd("..")
 ```
 The agentic and communal lists were borrowed from https://onlinelibrary.wiley.com/doi/10.1002/ejsp.2561; here are some examples
 ```{r wordExamples}
-
 head(agentic)
 head(communal)
-
 ```
 
 The group word lists were taken from https://pubmed.ncbi.nlm.nih.gov/35787033/, as well as the trait list:
@@ -78,7 +78,7 @@ head(groupwrds$men)
 head(groupwrds$women)
 head(trait)
 ```
-The job titles were scraped off this site: https://spotterful.com/blog/job-description-template/job-titles-list-a-z, and expanded through nearest neighbors
+The job titles were scraped off this site: https://theodora.com/dot_index.html, a 1971 survey on job titles.
 ```{r jobExamples, echo=FALSE, message=FALSE}
 head(job)
 ```
@@ -104,7 +104,7 @@ n_avwords_coha <- sapply(wordvecs.dat_coha, function(x)
 )
 ```
 ### Producing the mac scores
-The workhorse function; it iterates over each decade, computing the MAC score between each word and each group, then finds the Pearson correlation of the resulting lists (demonstrated visually later)
+The workhorse function, which iterates over each decade, computing the MAC score between each word and each group, then finds the Pearson correlation of the resulting lists (demonstrated visually later)
 ```{r importantFunction, message=FALSE}
 grpwrdassoc_rel <-
   function(group1index,
@@ -113,20 +113,32 @@ grpwrdassoc_rel <-
            wordvecs.dat = wordvecs.dat,
            unavwords = unavwords,
            corpus) {
-    
-    start_year <- if (corpus=="coha") 1820 else 1800
-    end_year <- if (corpus=="coha") 2010 else 1990
+    start_year <- if (corpus == "coha")
+      1820
+    else
+      1800
+    end_year <- if (corpus == "coha")
+      2010
+    else
+      1990
     
     # Create lists of the group's available words
     availwrds_decade_group1 <-
       lapply(1:length(wordvecs.dat), function(i) {
-        groupwrds[, group1index][!groupwrds[, group1index] %in% unavwords[[i]]]
-      })
-    availwrds_decade_group2 <-
-      lapply(1:length(wordvecs.dat), function(i) {
-        groupwrds[, group2index][!groupwrds[, group2index] %in% unavwords[[i]]]
+        groupwrds[, group1index][groupwrds[, group1index] != "" &
+                                   !groupwrds[, group1index] %in% unavwords[[i]]]
       })
     
+    availwrds_decade_group2 <-
+      lapply(1:length(wordvecs.dat), function(i) {
+        groupwrds[, group2index][groupwrds[, group2index] != "" &
+                                   !groupwrds[, group2index] %in% unavwords[[i]]]
+      })
+    
+    availwrds_decade_wordterms <-
+      lapply(1:length(wordvecs.dat), function(i) {
+        wordterms[!wordterms %in% unavwords[[i]]]
+      })
     
     # Now compute MAC from available words for each decade
     wordvecs.mat <- list()
@@ -135,6 +147,7 @@ grpwrdassoc_rel <-
     cor_group1_2ts <- vector()
     for (i in 1:length(wordvecs.dat)) {
       wordvecs.mat[[i]] <- as.matrix(wordvecs.dat[[i]])
+      
       mac_group1_2list[[i]] <-
         data.frame(
           grp1ef = mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group1[[i]])$P,
@@ -143,9 +156,20 @@ grpwrdassoc_rel <-
             mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group1[[i]])$P
           )
         )
-      cor_group1_2[[i]] <-
+      
+      # requires 2 data points; occasionally early COHA doesn't have enough, so replace with NA
+      cor_group1_2[[i]] <- tryCatch({
         cor.test(mac_group1_2list[[i]]$grp2ef, mac_group1_2list[[i]]$grp1ef)
-      cor_group1_2ts[i] <- cor_group1_2[[i]]$estimate
+      },
+      error = function(e)
+        NA)
+      
+      cor_group1_2ts[i] <- if (is.list(cor_group1_2[[i]])) {
+        cor_group1_2[[i]]$estimate
+      } else {
+        NA
+      }
+      
       cor_group1_2ts <-
         ts(
           cor_group1_2ts,
@@ -302,6 +326,7 @@ get_decade <-
 ```
 
 ```{r sampleCalls, echo = FALSE}
+ts0 <- get_ts("men", "women", "chore", "coha")
 ts1 <- get_ts("men", "women", "agentic", "engall")
 ts2 <- get_ts("men", "women", "communal", "coha")
 ts3 <- get_ts("men", "women", "noun", "coha")
@@ -452,6 +477,7 @@ ggplot(groupmiss2_coha, aes(x = year)) +
        color = "Legend") +
   theme_minimal()
 ```
+
 Clearly many fewer words were available in that first decade; let's check for statistical outliers.
 ```{r outliersMissingCoha}
 find_outliers <- function(column, year) {
@@ -525,7 +551,8 @@ Now we can begin to plot the actual correlation values over time, starting with 
 men_women_trait_job_ts <-
   list(
     get_ts("men", "women", "trait", "engall"),
-    get_ts("men", "women", "job", "engall")
+    get_ts("men", "women", "job", "engall"),
+    get_ts("men", "women", "chore", "engall")
   )
 plot_multiple_ts(men_women_trait_job_ts)
 
@@ -535,6 +562,9 @@ men_women_agentic_communal_ts <-
     get_ts("men", "women", "communal", "engall")
   )
 plot_multiple_ts(men_women_agentic_communal_ts)
+
+plot_one_decade(get_decade("men", "women", "chore", "engall", 1980))
+
 
 ```
 
@@ -642,7 +672,7 @@ plot_multiple_ts_averages(men_women_trait_job_ts)
 ### Baseline with nonhuman groups
 
 We can also do a baseline test with different groups to see if the men/women correlations are uniquely high.
-```{r plottingTsHumanNonhuman}
+```{r plottingTsHumanNonhuman, warning=FALSE}
 human_nonhuman_ts <-
   list(
     get_ts("nonhuman", "women", "trait", "coha"),
@@ -654,7 +684,7 @@ human_nonhuman_ts <-
   )
 plot_multiple_ts(human_nonhuman_ts)
 
-plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1890))
+plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1980))
 plot_one_decade(get_decade("nonhuman", "men", "trait", "coha", 1980))
 
 
@@ -665,7 +695,8 @@ plot_one_decade(get_decade("nonhuman", "men", "trait", "coha", 1980))
 men_women_trait_job_ts <-
   list(
     get_ts("men", "women", "trait", "coha"),
-    get_ts("men", "women", "job", "coha")
+    get_ts("men", "women", "job", "coha"),
+    get_ts("men", "women", "chore", "coha")
   )
 plot_multiple_ts(men_women_trait_job_ts)
 
