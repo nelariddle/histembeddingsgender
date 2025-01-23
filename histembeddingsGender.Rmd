@@ -83,7 +83,7 @@ chore <- read_list("chore.txt", "chore")
 
 setwd("..")
 ```
-The agentic and communal lists were borrowed from https://onlinelibrary.wiley.com/doi/10.1002/ejsp.2561; here are some examples
+The agentic and communal lists were borrowed from https://onlinelibrary.wiley.com/doi/10.1002/ejsp.2561; here are some examples:
 ```{r wordExamples}
 head(agentic)
 head(communal)
