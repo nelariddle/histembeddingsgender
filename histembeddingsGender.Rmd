@@ -132,11 +132,11 @@ grpwrdassoc_rel <-
            unavwords = unavwords,
            corpus) {
     start_year <- if (corpus == "coha")
-      1820
+      1810
     else
       1800
     end_year <- if (corpus == "coha")
-      2010
+      2000
     else
       1990
     
@@ -306,7 +306,7 @@ get_data_internal <- function(group1index,
     }
   } else {
     if (corpus == "coha") {
-      output <- data[[1]][[(decade - 1810) / 10]]
+      output <- data[[1]][[(decade - 1800) / 10]]
     } else {
       output <- data[[1]][[(decade - 1790) / 10]]
     }
@@ -352,8 +352,8 @@ ts4 <- get_ts("nonhuman", "women", "noun", "coha")
 
 
 decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
-decade2 <- get_decade("men", "women", "agentic", "coha", 1820)
-decade2 <- get_decade("men", "women", "noun", "coha", 2010)
+decade2 <- get_decade("men", "women", "agentic", "coha", 1810)
+decade2 <- get_decade("men", "women", "noun", "coha", 2000)
 ```
 
 ```{r makePlotsRevised, echo=FALSE, message=FALSE, warning=FALSE}
@@ -452,14 +452,14 @@ plot_one_decade <- function(decade_data) {
 We can plot the mac scores for two different groups against each other like so:
 
 ```{r plottingDecade, warning=FALSE}
-plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
+plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
 plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 ```
 
 The titles of the plots contain the Pearson coefficient, which is what we will use to measure the similarity of the two groups.
 
 ### Outlier analysis
-Noticing that the 1820 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing the slope.
+Noticing that the 1810 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing the slope.
 ```{r propMissingCoha}
 # Calculate the number of missing group words by decade
 groupmiss_coha <-
@@ -477,8 +477,8 @@ groupmiss2_coha <-
 colnames(groupmiss2_coha) <- colnames(groupwrds)
 
 # Add the year column
-rownames(groupmiss2_coha) <- seq(1820, 2010, by = 10)
-groupmiss2_coha$year <- seq(1820, 2010, by = 10)
+rownames(groupmiss2_coha) <- seq(1810, 2000, by = 10)
+groupmiss2_coha$year <- seq(1810, 2000, by = 10)
 groupmiss2_coha
 ```
 
@@ -589,7 +589,7 @@ get_ts_averages <- function(group1index,
                             wordterms,
                             corpus) {
   if (corpus == "coha") {
-    years <- seq(1820, 2010, by = 10)
+    years <- seq(1810, 2000, by = 10)
   } else {
     years <- seq(1800, 1990, by = 10)
   }
@@ -663,7 +663,7 @@ plot_multiple_ts_averages <- function(ts_list) {
     )) +
     geom_line() +
     labs(title = "Multiple Time Series Plot, Averages", x = "Year", y = "Similarity Coefficient") +
-    facet_wrap(~ word_term, scales = "fixed") +
+    facet_grid(corpus ~ word_term, scales = "fixed") +
     scale_y_continuous(limits = c(y_min, y_max)) +
     theme_minimal() + guides(color = guide_legend(title = NULL))
   
