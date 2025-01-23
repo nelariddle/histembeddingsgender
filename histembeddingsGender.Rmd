@@ -60,6 +60,23 @@ communal <- read_list("communal.txt", "communal")
 trait <- read_list("traitlist.txt", "trait")
 # job <- read_list("joblist.txt", "job")
 job <- read_list("joblistDOT.txt", "job")
+job2 <-
+  sub("s$", "", tolower(
+    read.csv(
+      "All_Occupations.csv",
+      header = TRUE,
+      stringsAsFactors = FALSE
+    )$Occupation[!grepl(
+      "\\s",
+      read.csv(
+        "All_Occupations.csv",
+        header = TRUE,
+        stringsAsFactors = FALSE
+      )$Occupation
+    )]
+  ))
+job<-intersect(job, job2)
+
 noun <- read_list("nouns.txt", "noun")
 common <- read_list("common.txt", "common")
 chore <- read_list("chore.txt", "chore")
@@ -78,7 +95,7 @@ head(groupwrds$men)
 head(groupwrds$women)
 head(trait)
 ```
-The job titles were scraped off this site: https://theodora.com/dot_index.html, a 1971 survey on job titles.
+The job titles were scraped off this site: https://theodora.com/dot_index.html, a 1971 survey on job titles. They were merged with one-word titles from ONET, the modern equivalent: https://www.onetonline.org/find/all. 
 ```{r jobExamples, echo=FALSE, message=FALSE}
 head(job)
 ```
