@@ -75,7 +75,7 @@ job2 <-
       )$Occupation
     )]
   ))
-job<-intersect(job, job2)
+job <- intersect(job, job2)
 
 noun <- read_list("nouns.txt", "noun")
 common <- read_list("common.txt", "common")
