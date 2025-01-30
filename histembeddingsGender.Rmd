@@ -4,6 +4,7 @@ output:
   html_document:
     toc: true
     toc_float: true
+  powerpoint_presentation: default
 date: December 3, 2024
 author: Nela Riddle
 ---
@@ -96,7 +97,7 @@ head(groupwrds$men)
 head(groupwrds$women)
 head(trait)
 ```
-The role titles were scraped off this site: https://theodora.com/dot_index.html, a 1971 survey on role titles. They were merged with one-word titles from ONET, the modern equivalent: https://www.onetonline.org/find/all. 
+The role titles were scraped off this site: https://theodora.com/dot_index.html, a 1971 survey on role titles. They were merged with one-word titles from ONET, the modern equivalent: https://www.onetonline.org/find/all. They were merged with the chore list to represent unpaid labor.
 ```{r roleExamples, echo=FALSE, message=FALSE}
 head(role)
 ```
@@ -454,6 +455,8 @@ We can plot the mac scores for two different groups against each other like so:
 ```{r plottingDecade, warning=FALSE}
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
 plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
+plot_one_decade(get_decade("men", "women", "role", "engall", 1950))
+
 ```
 
 The titles of the plots contain the Pearson coefficient, which is what we will use to measure the similarity of the two groups.
@@ -488,7 +491,7 @@ ggplot(groupmiss2_coha, aes(x = year)) +
   geom_line(aes(y = men, color = "Men")) +
   geom_line(aes(y = women, color = "Women")) +
   scale_color_manual(values = c("Men" = "blue", "Women" = "red")) +
-  labs(title = "prop. group words available over time",
+  labs(title = "prop. group words available over time (coha)",
        x = "Years",
        y = "Values",
        color = "Legend") +
@@ -542,7 +545,7 @@ ggplot(groupmiss2, aes(x = year)) +
   geom_line(aes(y = men, color = "Men")) +
   geom_line(aes(y = women, color = "Women")) +
   scale_color_manual(values = c("Men" = "blue", "Women" = "red")) +
-  labs(title = "prop. group words available over time",
+  labs(title = "prop. group words available over time (engall)",
        x = "Years",
        y = "Values",
        color = "Legend") +
@@ -763,7 +766,7 @@ setwd("..")
 
 ### Frequency visualized
 
-```{r freqPlotting, warning=FALSE}
+```{r freqPlotting, warning=FALSE, echo=FALSE}
 plot_one_decade_shaded <- function(decade_data) {
   # Extract attributes
   group1 <- attr(decade_data, "group1index")
@@ -806,4 +809,27 @@ plot_one_decade_shaded <- function(decade_data) {
   return(p)
 }
 plot_one_decade_shaded(get_decade("men", "women", "communal", "engall", 1990))
+plot_one_decade_shaded(get_decade("nonhuman", "men", "communal", "coha", 1980))
+
+```
+
+```{r extraStuff}
+men_women_trait_role_ts <-
+  list(
+    get_ts("men", "women", "trait", "engall"),
+    get_ts("men", "women", "role", "engall"),
+    get_ts("men", "women", "trait", "coha"),
+    get_ts("men", "women", "role", "coha")
+  )
+plot_multiple_ts(men_women_trait_role_ts)
+
+men_women_agentic_communal_ts <-
+  list(
+    get_ts("men", "women", "agentic", "engall"),
+    get_ts("men", "women", "communal", "engall"),
+    get_ts("men", "women", "agentic", "coha"),
+    get_ts("men", "women", "communal", "coha")
+  )
+plot_multiple_ts(men_women_agentic_communal_ts)
+
 ```
