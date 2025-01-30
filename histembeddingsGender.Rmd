@@ -4,7 +4,6 @@ output:
   html_document:
     toc: true
     toc_float: true
-  powerpoint_presentation: default
 date: December 3, 2024
 author: Nela Riddle
 ---
@@ -764,9 +763,8 @@ freqavg_dat <- freqavg_dat %>%
 setwd("..")
 ```
 
-### Frequency visualized
 
-```{r freqPlotting, warning=FALSE, echo=FALSE}
+```{r freqPlotting, warning=FALSE, echo=FALSE, fig.show="hide"}
 plot_one_decade_shaded <- function(decade_data) {
   # Extract attributes
   group1 <- attr(decade_data, "group1index")
@@ -813,7 +811,7 @@ plot_one_decade_shaded(get_decade("nonhuman", "men", "communal", "coha", 1980))
 
 ```
 
-```{r extraStuff}
+```{r extraStuff, warning=FALSE, echo=FALSE, fig.show="hide"}
 men_women_trait_role_ts <-
   list(
     get_ts("men", "women", "trait", "engall"),
