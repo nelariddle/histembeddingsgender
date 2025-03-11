@@ -812,7 +812,7 @@ plot_one_decade_shaded(get_decade("nonhuman", "men", "communal", "coha", 1980))
 ```
 
 Plots combined
-```{r extraStuff, warning=FALSE, echo=FALSE, fig.show="hide"}
+```{r extraStuff, warning=FALSE}
 men_women_trait_role_ts <-
   list(
     get_ts("men", "women", "trait", "engall"),
