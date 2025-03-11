@@ -4,6 +4,7 @@ output:
   html_document:
     toc: true
     toc_float: true
+  github_document:
 date: December 3, 2024
 author: Nela Riddle
 ---
