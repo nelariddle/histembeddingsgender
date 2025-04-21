@@ -873,7 +873,7 @@ plot_multiple_ts(men_women_agentic_communal_ts)
 
 ```
 
-## Analysis of word count by gender
+### Analysis of word count by gender
 
 First, the raw counts can be viewed here:
 [gender_word_counts.csv](gender_word_counts.csv)
