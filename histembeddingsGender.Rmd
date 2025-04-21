@@ -877,6 +877,7 @@ plot_multiple_ts(men_women_agentic_communal_ts)
 
 First, the raw counts can be viewed here:
 [gender_word_counts.csv](gender_word_counts.csv)
+
 [gender_word_counts_genre_aggregated.csv](gender_word_counts_genre_aggregated.csv)
 
 ```{r combineByGenre, warning=FALSE, echo=FALSE, fig.show="hide"}
