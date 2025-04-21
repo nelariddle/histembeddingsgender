@@ -877,6 +877,21 @@ plot_multiple_ts(men_women_agentic_communal_ts)
 
 First, the raw counts can be viewed here:
 [gender_word_counts.csv](gender_word_counts.csv)
+```{r combineByGenre, warning=FALSE, echo=FALSE, fig.show="hide"}
+library(dplyr)
+
+# Read the CSV
+df <- read.csv("gender_word_counts.csv")
+
+# Group by decade, gender, and word, then sum the counts
+aggregated_df <- df %>%
+  group_by(decade, gender, word) %>%
+  summarise(total_count = sum(count), .groups = "drop")
+
+# Write to CSV without quotes
+write.csv(aggregated_df, "aggregated_gender_word_counts.csv", row.names = FALSE, quote = FALSE)
+```
+
 ```{r visualizingWordCounts, warning=FALSE, echo=FALSE, fig.show="hide"}
 # Load tidyverse
 library(tidyverse)
@@ -1049,7 +1064,7 @@ gendered_data_grouped <- gender_word_counts %>%
   inner_join(word_pair_groups, by = "word")
 
 # Define the cumulative proportion threshold (e.g., 99% for top 99% of word counts)
-cumulative_threshold <- 0.95  # Change this value as needed (e.g., 0.90 for 90%)
+cumulative_threshold <- 0.5  # Change this value as needed (e.g., 0.90 for 90%)
 
 # Filter to top words by cumulative proportion
 top_gendered_words <- gendered_data_grouped %>%
