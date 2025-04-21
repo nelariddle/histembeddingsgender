@@ -3,6 +3,11 @@ Tran_Riddle_Historical Embeddings
 Nela Riddle
 December 3, 2024
 
+[Visit the original repository on
+GitHub](https://github.com/nelariddle/histembeddingsgender)
+
+### Setup
+
 First, load in the pre-written group and word lists to be used in
 analyses:
 
@@ -28,16 +33,36 @@ groupwrds <- groupwrds[-1, ]
 agentic <- read_list("agentic.txt", "agentic")
 communal <- read_list("communal.txt", "communal")
 trait <- read_list("traitlist.txt", "trait")
-job <- read_list("joblist.txt", "job")
-# job <- read_list("joblistDOT.txt", "job")
-fruit <- read_list("fruit.txt", "fruit")
+chore <- read_list("chore.txt", "chore")
+role <- read_list("joblistDOT.txt", "role")
+role2 <-
+  sub("s$", "", tolower(
+    read.csv(
+      "All_Occupations.csv",
+      header = TRUE,
+      stringsAsFactors = FALSE
+    )$Occupation[!grepl(
+      "\\s",
+      read.csv(
+        "All_Occupations.csv",
+        header = TRUE,
+        stringsAsFactors = FALSE
+      )$Occupation
+    )]
+  ))
+role <- union(role, role2)
+role <- union(role, chore)
+
+
 noun <- read_list("nouns.txt", "noun")
 common <- read_list("common.txt", "common")
+
+setwd("..")
 ```
 
 The agentic and communal lists were borrowed from
 <https://onlinelibrary.wiley.com/doi/10.1002/ejsp.2561>; here are some
-examples
+examples:
 
 ``` r
 head(agentic)
@@ -50,7 +75,8 @@ head(agentic)
 head(communal)
 ```
 
-    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"   "accommodation" "accompany"
+    ## [1] "accept"        "acceptable"    "acceptance"    "accommodate"   "accommodation"
+    ## [6] "accompany"
 
 The group word lists were taken from
 <https://pubmed.ncbi.nlm.nih.gov/35787033/>, as well as the trait list:
@@ -71,16 +97,21 @@ head(groupwrds$women)
 head(trait)
 ```
 
-    ## [1] "able"          "abrupt"        "absentminded"  "abusive"       "accommodating" "accurate"
+    ## [1] "able"          "abrupt"        "absentminded"  "abusive"       "accommodating"
+    ## [6] "accurate"
 
-The job titles were scraped off this site:
-<https://spotterful.com/blog/job-description-template/job-titles-list-a-z>,
-and expanded through nearest neighbors
+The role titles were scraped off this site:
+<https://theodora.com/dot_index.html>, a 1971 survey on role titles.
+They were merged with one-word titles from ONET, the modern equivalent:
+<https://www.onetonline.org/find/all>. They were merged with the chore
+list to represent unpaid labor.
 
-    ## [1] "accompanist"   "accountant"    "actuary"       "actor"         "acupuncturist" "adjudicator"
+    ## [1] "referee"     "wirer"       "stoneworker" "doweler"     "clerk"       "boiler"
 
-The workhorse function; it iterates over each decade, computing the MAC
-score between each word and each group, then finds the Pearson
+### Producing the mac scores
+
+The workhorse function, which iterates over each decade, computing the
+MAC score between each word and each group, then finds the Pearson
 correlation of the resulting lists (demonstrated visually later)
 
 ``` r
@@ -91,20 +122,32 @@ grpwrdassoc_rel <-
            wordvecs.dat = wordvecs.dat,
            unavwords = unavwords,
            corpus) {
-    
-    start_year <- if (corpus=="coha") 1820 else 1800
-    end_year <- if (corpus=="coha") 2010 else 1990
+    start_year <- if (corpus == "coha")
+      1810
+    else
+      1800
+    end_year <- if (corpus == "coha")
+      2000
+    else
+      1990
     
     # Create lists of the group's available words
     availwrds_decade_group1 <-
       lapply(1:length(wordvecs.dat), function(i) {
-        groupwrds[, group1index][!groupwrds[, group1index] %in% unavwords[[i]]]
-      })
-    availwrds_decade_group2 <-
-      lapply(1:length(wordvecs.dat), function(i) {
-        groupwrds[, group2index][!groupwrds[, group2index] %in% unavwords[[i]]]
+        groupwrds[, group1index][groupwrds[, group1index] != "" &
+                                   !groupwrds[, group1index] %in% unavwords[[i]]]
       })
     
+    availwrds_decade_group2 <-
+      lapply(1:length(wordvecs.dat), function(i) {
+        groupwrds[, group2index][groupwrds[, group2index] != "" &
+                                   !groupwrds[, group2index] %in% unavwords[[i]]]
+      })
+    
+    availwrds_decade_wordterms <-
+      lapply(1:length(wordvecs.dat), function(i) {
+        wordterms[!wordterms %in% unavwords[[i]]]
+      })
     
     # Now compute MAC from available words for each decade
     wordvecs.mat <- list()
@@ -113,6 +156,7 @@ grpwrdassoc_rel <-
     cor_group1_2ts <- vector()
     for (i in 1:length(wordvecs.dat)) {
       wordvecs.mat[[i]] <- as.matrix(wordvecs.dat[[i]])
+      
       mac_group1_2list[[i]] <-
         data.frame(
           grp1ef = mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group1[[i]])$P,
@@ -121,9 +165,20 @@ grpwrdassoc_rel <-
             mac(wordvecs.mat[[i]], S = wordterms, A = availwrds_decade_group1[[i]])$P
           )
         )
-      cor_group1_2[[i]] <-
+      
+      # requires 2 data points; occasionally early COHA doesn't have enough, so replace with NA
+      cor_group1_2[[i]] <- tryCatch({
         cor.test(mac_group1_2list[[i]]$grp2ef, mac_group1_2list[[i]]$grp1ef)
-      cor_group1_2ts[i] <- cor_group1_2[[i]]$estimate
+      },
+      error = function(e)
+        NA)
+      
+      cor_group1_2ts[i] <- if (is.list(cor_group1_2[[i]])) {
+        cor_group1_2[[i]]$estimate
+      } else {
+        NA
+      }
+      
       cor_group1_2ts <-
         ts(
           cor_group1_2ts,
@@ -169,11 +224,13 @@ print(mac(
     ##     happy 
     ## 0.4395598
 
+### Looking at a decade
+
 We can plot the mac scores for two different groups against each other
 like so:
 
 ``` r
-plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
+plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-1.png)<!-- -->
@@ -184,10 +241,18 @@ plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 
 ![](histembeddingsGender_files/figure-gfm/plottingDecade-2.png)<!-- -->
 
+``` r
+plot_one_decade(get_decade("men", "women", "role", "engall", 1950))
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingDecade-3.png)<!-- -->
+
 The titles of the plots contain the Pearson coefficient, which is what
 we will use to measure the similarity of the two groups.
 
-Noticing that the 1820 coha plot had an odd correlation, let’s check the
+### Outlier analysis
+
+Noticing that the 1810 coha plot had an odd correlation, let’s check the
 proportion of gender words that were available, as this could be skewing
 the slope.
 
@@ -208,32 +273,32 @@ groupmiss2_coha <-
 colnames(groupmiss2_coha) <- colnames(groupwrds)
 
 # Add the year column
-rownames(groupmiss2_coha) <- seq(1820, 2010, by = 10)
-groupmiss2_coha$year <- seq(1820, 2010, by = 10)
+rownames(groupmiss2_coha) <- seq(1810, 2000, by = 10)
+groupmiss2_coha$year <- seq(1810, 2000, by = 10)
 groupmiss2_coha
 ```
 
     ##            men     women     human  nonhuman year
-    ## 1820 0.4242424 0.3714286 0.5000000 0.1111111 1820
-    ## 1830 0.5757576 0.5714286 0.6428571 0.4444444 1830
-    ## 1840 0.6969697 0.6571429 0.6428571 0.6111111 1840
-    ## 1850 0.6666667 0.6857143 0.6428571 0.6111111 1850
-    ## 1860 0.6969697 0.7142857 0.6428571 0.6666667 1860
-    ## 1870 0.6969697 0.7142857 0.7142857 0.6666667 1870
-    ## 1880 0.6969697 0.6857143 0.8571429 0.6111111 1880
-    ## 1890 0.7272727 0.7142857 0.9285714 0.7222222 1890
-    ## 1900 0.7575758 0.6857143 0.9285714 0.6111111 1900
-    ## 1910 0.7272727 0.7428571 0.9285714 0.7222222 1910
-    ## 1920 0.7878788 0.7428571 0.9285714 0.6111111 1920
-    ## 1930 0.8181818 0.6857143 1.0000000 0.7222222 1930
+    ## 1810 0.4242424 0.3714286 0.5000000 0.1111111 1810
+    ## 1820 0.5757576 0.5714286 0.6428571 0.4444444 1820
+    ## 1830 0.6969697 0.6571429 0.6428571 0.6111111 1830
+    ## 1840 0.6666667 0.6857143 0.6428571 0.6111111 1840
+    ## 1850 0.6969697 0.7142857 0.6428571 0.6666667 1850
+    ## 1860 0.6969697 0.7142857 0.7142857 0.6666667 1860
+    ## 1870 0.6969697 0.6857143 0.8571429 0.6111111 1870
+    ## 1880 0.7272727 0.7142857 0.9285714 0.7222222 1880
+    ## 1890 0.7575758 0.6857143 0.9285714 0.6111111 1890
+    ## 1900 0.7272727 0.7428571 0.9285714 0.7222222 1900
+    ## 1910 0.7878788 0.7428571 0.9285714 0.6111111 1910
+    ## 1920 0.8181818 0.6857143 1.0000000 0.7222222 1920
+    ## 1930 0.8181818 0.7142857 0.9285714 0.7222222 1930
     ## 1940 0.8181818 0.7142857 0.9285714 0.7222222 1940
-    ## 1950 0.8181818 0.7142857 0.9285714 0.7222222 1950
-    ## 1960 0.7575758 0.7142857 1.0000000 0.8333333 1960
-    ## 1970 0.7575758 0.6857143 1.0000000 0.8888889 1970
-    ## 1980 0.7878788 0.6571429 1.0000000 0.8888889 1980
-    ## 1990 0.7272727 0.6857143 1.0000000 0.8333333 1990
-    ## 2000 0.6969697 0.7142857 1.0000000 0.8888889 2000
-    ## 2010 0.7575758 0.7142857 1.0000000 0.8333333 2010
+    ## 1950 0.7575758 0.7142857 1.0000000 0.8333333 1950
+    ## 1960 0.7575758 0.6857143 1.0000000 0.8888889 1960
+    ## 1970 0.7878788 0.6571429 1.0000000 0.8888889 1970
+    ## 1980 0.7272727 0.6857143 1.0000000 0.8333333 1980
+    ## 1990 0.6969697 0.7142857 1.0000000 0.8888889 1990
+    ## 2000 0.7575758 0.7142857 1.0000000 0.8333333 2000
 
 ``` r
 # Create the plot
@@ -241,7 +306,7 @@ ggplot(groupmiss2_coha, aes(x = year)) +
   geom_line(aes(y = men, color = "Men")) +
   geom_line(aes(y = women, color = "Women")) +
   scale_color_manual(values = c("Men" = "blue", "Women" = "red")) +
-  labs(title = "prop. group words available over time",
+  labs(title = "prop. group words available over time (coha)",
        x = "Years",
        y = "Values",
        color = "Legend") +
@@ -249,6 +314,7 @@ ggplot(groupmiss2_coha, aes(x = year)) +
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plotMissingCoha-1.png)<!-- -->
+
 Clearly many fewer words were available in that first decade; let’s
 check for statistical outliers.
 
@@ -270,14 +336,14 @@ outliers_men
 ```
 
     ##   Decade     Value
-    ## 1   1820 0.4242424
+    ## 1   1810 0.4242424
 
 ``` r
 outliers_women
 ```
 
     ##   Decade     Value
-    ## 1   1820 0.3714286
+    ## 1   1810 0.3714286
 
 Repeat for engall:
 
@@ -331,7 +397,7 @@ ggplot(groupmiss2, aes(x = year)) +
   geom_line(aes(y = men, color = "Men")) +
   geom_line(aes(y = women, color = "Women")) +
   scale_color_manual(values = c("Men" = "blue", "Women" = "red")) +
-  labs(title = "prop. group words available over time",
+  labs(title = "prop. group words available over time (engall)",
        x = "Years",
        y = "Values",
        color = "Legend") +
@@ -363,16 +429,18 @@ outliers_women
 
 Engall has no outliers, as expected.
 
+### Plots, engall
+
 Now we can begin to plot the actual correlation values over time,
 starting with engall:
 
 ``` r
-men_women_trait_job_ts <-
+men_women_trait_role_ts <-
   list(
     get_ts("men", "women", "trait", "engall"),
-    get_ts("men", "women", "job", "engall")
+    get_ts("men", "women", "role", "engall")
   )
-plot_multiple_ts(men_women_trait_job_ts)
+plot_multiple_ts(men_women_trait_role_ts)
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomen-1.png)<!-- -->
@@ -393,17 +461,19 @@ the Pearson correlations). To do this, we take the mean of all mac
 scores with a single group.
 
 ``` r
-men_women_trait_job_ts <-
+men_women_trait_role_ts <-
   list(
     get_ts_averages("men", "agentic", "engall"),
     get_ts_averages("men", "communal", "engall"),
     get_ts_averages("women", "agentic", "engall"),
     get_ts_averages("women", "communal", "engall")
   )
-plot_multiple_ts_averages(men_women_trait_job_ts)
+plot_multiple_ts_averages(men_women_trait_role_ts)
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomenAverages-1.png)<!-- -->
+
+### Baseline with nonhuman groups
 
 We can also do a baseline test with different groups to see if the
 men/women correlations are uniquely high.
@@ -424,24 +494,26 @@ plot_multiple_ts(human_nonhuman_ts)
 ![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-1.png)<!-- -->
 
 ``` r
-plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1890))
+plot_one_decade(get_decade("nonhuman", "women", "trait", "engall", 1980))
 ```
-
-    ## Warning: Removed 81 rows containing non-finite values (`stat_smooth()`).
-
-    ## Warning: Removed 81 rows containing missing values (`geom_point()`).
-
-    ## Warning: Removed 81 rows containing missing values (`geom_text()`).
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-2.png)<!-- -->
 
 ``` r
-men_women_trait_job_ts <-
+plot_one_decade(get_decade("nonhuman", "men", "trait", "coha", 1980))
+```
+
+![](histembeddingsGender_files/figure-gfm/plottingTsHumanNonhuman-3.png)<!-- -->
+
+### Plots, coha
+
+``` r
+men_women_trait_role_ts <-
   list(
     get_ts("men", "women", "trait", "coha"),
-    get_ts("men", "women", "job", "coha")
+    get_ts("men", "women", "role", "coha")
   )
-plot_multiple_ts(men_women_trait_job_ts)
+plot_multiple_ts(men_women_trait_role_ts)
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomenCoha-1.png)<!-- -->
@@ -458,17 +530,19 @@ plot_multiple_ts(men_women_agentic_communal_ts)
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomenCoha-2.png)<!-- -->
 
 ``` r
-men_women_trait_job_ts <-
+men_women_trait_role_ts <-
   list(
     get_ts_averages("men", "agentic", "coha"),
     get_ts_averages("men", "communal", "coha"),
     get_ts_averages("women", "agentic", "coha"),
     get_ts_averages("women", "communal", "coha")
   )
-plot_multiple_ts_averages(men_women_trait_job_ts)
+plot_multiple_ts_averages(men_women_trait_role_ts)
 ```
 
 ![](histembeddingsGender_files/figure-gfm/plottingTsMenWomenAveragesCoha-1.png)<!-- -->
+
+### Data in excel format
 
 Access the files containing all the data, which can be filtered in
 excel:
@@ -508,3 +582,31 @@ write_xlsx(overall_results_averages, "overall_results_averages.xlsx")
 ```
 
 [overall_results_averages.xlsx](overall_results_averages.xlsx)
+
+Plots combined
+
+``` r
+men_women_trait_role_ts <-
+  list(
+    get_ts("men", "women", "trait", "engall"),
+    get_ts("men", "women", "role", "engall"),
+    get_ts("men", "women", "trait", "coha"),
+    get_ts("men", "women", "role", "coha")
+  )
+plot_multiple_ts(men_women_trait_role_ts)
+```
+
+![](histembeddingsGender_files/figure-gfm/extraStuff-1.png)<!-- -->
+
+``` r
+men_women_agentic_communal_ts <-
+  list(
+    get_ts("men", "women", "agentic", "engall"),
+    get_ts("men", "women", "communal", "engall"),
+    get_ts("men", "women", "agentic", "coha"),
+    get_ts("men", "women", "communal", "coha")
+  )
+plot_multiple_ts(men_women_agentic_communal_ts)
+```
+
+![](histembeddingsGender_files/figure-gfm/extraStuff-2.png)<!-- -->

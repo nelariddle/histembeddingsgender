@@ -10,6 +10,8 @@ author: Nela Riddle
 ---
 [Visit the original repository on GitHub](https://github.com/nelariddle/histembeddingsgender)
 
+We load in the required packages.
+
 ```{r loadPackages, echo = FALSE, message=FALSE, warning=FALSE}
 ########################################################
 
@@ -36,7 +38,10 @@ if (!require("writexl")) {install.packages("writexl");require(writexl)}
 ```
 
 ### Setup
-First, load in the pre-written group and word lists to be used in analyses:
+First, load in the pre-written group and word lists to be used in analyses. We are creating a custom function for reading in the word lists. It assumes no headers and single vector of words.
+
+Then, we pull in the group words and trait/role words files file and doing some basic cleaning.
+
 ```{r loadWords, include=TRUE, warning=FALSE}
 ## Load in data ----
 ## Set WD to word stimuli
@@ -102,6 +107,9 @@ The role titles were scraped off this site: https://theodora.com/dot_index.html,
 head(role)
 ```
 
+Now, we define which words are not available in both sets of embeddings across time.
+
+This was a decision made by the original folks who trained these embeddings (histwords) "Furthermore, the authors only computed embeddings for words that were among the top 100,000 most frequent words over all time (for EngAll) or top 50,000 most frequent words (for COHA), and further discarded any words that occurred less than 500 times (for EngAll) or 100 times (for COHA) in a given decade."
 
 ```{r loadVectors, echo=FALSE, message=FALSE}
 # Check unavailable words by decade ----
@@ -123,7 +131,9 @@ n_avwords_coha <- sapply(wordvecs.dat_coha, function(x)
 )
 ```
 ### Producing the mac scores
-The workhorse function, which iterates over each decade, computing the MAC score between each word and each group, then finds the Pearson correlation of the resulting lists (demonstrated visually later)
+
+The workhorse function, which iterates over each decade, computing the MAC (mean average cosine similarity) score between each word and each group, then finds the Pearson correlation of the resulting lists (demonstrated visually later).
+
 ```{r importantFunction, message=FALSE}
 grpwrdassoc_rel <-
   function(group1index,
@@ -203,7 +213,9 @@ grpwrdassoc_rel <-
     return(output_rel)
   }
 ```
+
 An example of how the mac function works (using engall 1990); here we compute the mean average correlation of each word in the first list to the list of animals. It makes sense that the animals in the first list had the highest mac score.
+
 ```{r sanityCheck1}
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
@@ -211,7 +223,9 @@ print(mac(
   A = c("dog", "cat", "turtle", "fish", "monkey") # the "group" words
 )$P)
 ```
+
 You can compute the cosine similarity of any two words by replacing the lists with single words.
+
 ```{r sanityCheck2}
 print(mac(
   as.matrix(wordvecs.dat[[20]]),
@@ -219,6 +233,23 @@ print(mac(
   A = "sad"
 )$P)
 ```
+We can also see a MAC score for an association across decades.
+
+```{r mac by decade}
+for (i in 1:20) {
+  print(mac(as.matrix(wordvecs.dat[[i]]),
+            S = "teacher",
+            A = "woman")$P)
+}
+```
+
+Now, we will create some helper functions, starting with creating an empty dataframe to be filled in.
+
+This custom function is built for our research question. It takes two sets of group words (e.g., man and woman words), a set of word terms (e.g., agency), and a corpus term (i.e., to define either engall or coha). It then calls the above workhorse function, computing the cosine similarities and then the higher-order correlations i.e., grpwrdassoc_rel
+
+The get_data_internal function  can be flexibly called for the whole time period or for a specific decade, converting into an easier-to-work-with dataframe.
+
+The get_ts and get_decade functions are just simple-use wrappers for the above function. This likely helps to prevent mistakes.
 
 ```{r helperFunctions, echo = FALSE, message = FALSE}
 overall_results <- data.frame()
@@ -344,6 +375,8 @@ get_decade <-
 
 ```
 
+Now, we test everything we have so far.
+
 ```{r sampleCalls, echo = FALSE}
 ts1 <- get_ts("men", "women", "agentic", "engall")
 ts2 <- get_ts("men", "women", "communal", "coha")
@@ -356,6 +389,7 @@ decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
 decade2 <- get_decade("men", "women", "agentic", "coha", 1810)
 decade2 <- get_decade("men", "women", "noun", "coha", 2000)
 ```
+Now, we are creating functions for dynamic visualizations.
 
 ```{r makePlotsRevised, echo=FALSE, message=FALSE, warning=FALSE}
 library(ggplot2)
@@ -401,7 +435,7 @@ plot_multiple_ts <- function(ts_list) {
       color = interaction(group1, group2, word_term)
     )) +
     geom_line() +
-    labs(title = "Multiple Time Series Plot, Correlations", x = "Year", y = "Similarity Coefficient") +
+    labs(title = "Multiple Time Series Plot, Correlations", x = "Year", y = "Correlation Coefficient") +
     facet_wrap( ~ corpus, scales = "fixed") +
     scale_y_continuous(limits = c(y_min, y_max)) +
     theme_minimal() + guides(color = guide_legend(title = NULL))
@@ -449,8 +483,13 @@ plot_one_decade <- function(decade_data) {
 }
 
 ```
+
 ### Looking at a decade
-We can plot the mac scores for two different groups against each other like so:
+
+We can plot the mac scores for two different groups against each other like so.
+
+The correlation between men-agentic and women-agentic cosine similarities in coha in 1810. 
+
 
 ```{r plottingDecade, warning=FALSE}
 plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
@@ -665,7 +704,7 @@ plot_multiple_ts_averages <- function(ts_list) {
       color = interaction(group1, word_term)
     )) +
     geom_line() +
-    labs(title = "Multiple Time Series Plot, Averages", x = "Year", y = "Similarity Coefficient") +
+    labs(title = "Multiple Time Series Plot, Averages", x = "Year", y = "Correlation Coefficient") +
     facet_grid(corpus ~ word_term, scales = "fixed") +
     scale_y_continuous(limits = c(y_min, y_max)) +
     theme_minimal() + guides(color = guide_legend(title = NULL))
@@ -831,5 +870,238 @@ men_women_agentic_communal_ts <-
     get_ts("men", "women", "communal", "coha")
   )
 plot_multiple_ts(men_women_agentic_communal_ts)
+
+```
+
+## Analysis of word count by gender
+
+First, the raw counts can be viewed here:
+[gender_word_counts.csv](gender_word_counts.csv)
+```{r visualizingWordCounts, warning=FALSE, echo=FALSE, fig.show="hide"}
+# Load tidyverse
+library(tidyverse)
+
+# Read the CSV file
+gender_counts <- read_csv("gender_word_counts.csv")
+
+# Summarize total word counts
+df_summary <- gender_counts %>%
+  group_by(gender, word) %>%
+  summarise(total_count = sum(count), .groups = 'drop') %>%
+  arrange(desc(total_count))
+
+# Get top 15 words per gender
+top_words <- df_summary %>%
+  group_by(gender) %>%
+  slice_max(order_by = total_count, n = 15)
+
+# Create static bar plot
+ggplot(top_words, aes(x = reorder(word, total_count), y = total_count, fill = gender)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~gender, scales = "free_y") +
+  labs(title = "Top Gendered Words by Frequency",
+       x = "Word", y = "Total Count") +
+  theme_minimal()
+
+
+
+```
+
+```{r plot2, warning=FALSE, echo=FALSE, fig.show="hide"}
+library(tidyverse)
+
+# Your paired word lists
+male_words <- c(
+  "men", "man", "male", "males", "masculine", "masculinity",
+  "he", "him", "his", "himself",
+  "mr", "mister",
+  "boy", "boys",
+  "guy", "guys",
+  "fella", "fellas",
+  "gent", "gents",
+  "sir", "sirs",
+  "lad", "lads",
+  "gentleman", "gentlemen",
+  "prince", "princes",
+  "king", "kings"
+)
+
+female_words <- c(
+  "women", "woman", "female", "females", "feminine", "femininity",
+  "she", "her", "hers", "herself",
+  "mrs", "ms",
+  "girl", "girls",
+  "gal", "gals",
+  "lass", "lassie",
+  "dame", "dames",
+  "madam", "miss",
+  "maiden", "maidens",
+  "gentlewoman", "gentlewomen",
+  "princess", "princesses",
+  "queen", "queens"
+)
+
+
+
+# Combine into one dataframe
+word_pairs <- tibble(
+  concept = paste0("pair_", seq_along(male_words)),
+  male = male_words,
+  female = female_words
+)
+
+# Load your word count CSV
+df <- read_csv("gender_word_counts.csv")
+
+# Filter to only those words in our lists
+df_filtered <- df %>%
+  filter(word %in% c(male_words, female_words))
+
+# Build pairing table
+pair_df <- data.frame(male = male_words, female = female_words)
+
+# Create a lookup for pairing
+word_pair_map <- c(setNames(pair_df$male, pair_df$male),
+                   setNames(pair_df$male, pair_df$female))
+
+df_paired <- df_filtered %>%
+  mutate(pair = word_pair_map[word]) %>%
+  mutate(direction = ifelse(gender == "male", "male", "female"),
+         count_signed = ifelse(gender == "male", count, -count))
+
+# Aggregate by word and pair (if needed across multiple genres/decades)
+plot_df <- df_paired %>%
+  group_by(pair, word, direction) %>%
+  summarise(count_signed = sum(count_signed), .groups = "drop")
+
+# Plot
+ggplot(plot_df, aes(x = count_signed, y = reorder(pair, abs(count_signed)), fill = direction)) +
+  geom_bar(stat = "identity", position = "identity") +
+  scale_fill_manual(values = c("male" = "#3498db", "female" = "#e74c3c")) +
+  scale_x_continuous(labels = abs) +
+  labs(
+    title = "Mirrored Gendered Word Counts",
+    x = "Word Count",
+    y = "Word Pair",
+    fill = "Gender"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 10))
+
+```
+
+```{r plot3, warning=FALSE, echo=FALSE, fig.show="hide"}
+# Load required libraries
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(scales)
+
+# Read the dataset
+gender_word_counts <- read_csv("gender_word_counts.csv")
+
+# Define word pair lists
+male_words <- c(
+  "men", "man", "male", "males", "masculine", "masculinity",
+  "he", "him", "his", "himself",
+  "mr", "mister",
+  "boy", "boys",
+  "guy", "guys",
+  "fella", "fellas",
+  "gent", "gents",
+  "sir", "sirs",
+  "lad", "lads",
+  "gentleman", "gentlemen",
+  "prince", "princes",
+  "king", "kings"
+)
+
+female_words <- c(
+  "women", "woman", "female", "females", "feminine", "femininity",
+  "she", "her", "hers", "herself",
+  "mrs", "ms",
+  "girl", "girls",
+  "gal", "gals",
+  "lass", "lassie",
+  "dame", "dames",
+  "madam", "miss",
+  "maiden", "maidens",
+  "gentlewoman", "gentlewomen",
+  "princess", "princesses",
+  "queen", "queens"
+)
+
+# Build a lookup table of word -> word_pair_group
+word_pair_groups <- data.frame(
+  male_word = male_words,
+  female_word = female_words,
+  word_pair_group = paste0("pair_", seq_along(male_words))
+) %>%
+  pivot_longer(cols = c(male_word, female_word),
+               names_to = "original_gender",
+               values_to = "word") %>%
+  select(word, word_pair_group)
+
+# Merge and keep only gendered words
+gendered_data_grouped <- gender_word_counts %>%
+  inner_join(word_pair_groups, by = "word")
+
+# Define the cumulative proportion threshold (e.g., 99% for top 99% of word counts)
+cumulative_threshold <- 0.95  # Change this value as needed (e.g., 0.90 for 90%)
+
+# Filter to top words by cumulative proportion
+top_gendered_words <- gendered_data_grouped %>%
+  group_by(decade, gender) %>%
+  mutate(total_word_count = sum(count),
+         word_proportion = count / total_word_count) %>%
+  arrange(decade, gender, desc(word_proportion)) %>%
+  mutate(cumulative_proportion = cumsum(word_proportion)) %>%
+  filter(cumulative_proportion <= cumulative_threshold) %>%
+  ungroup()
+
+# Flip female counts for stacking below center (for visualization)
+top_gendered_words <- top_gendered_words %>%
+  mutate(display_count = ifelse(gender == "female", -count, count))
+
+# Order word_pair_group by total count so biggest stacks are closest to center
+ordered_pairs <- top_gendered_words %>%
+  group_by(word_pair_group) %>%
+  summarise(total = sum(abs(display_count)), .groups = "drop") %>%
+  arrange(desc(total)) %>%
+  pull(word_pair_group)
+
+top_gendered_words <- top_gendered_words %>%
+  mutate(word_pair_group = factor(word_pair_group, levels = ordered_pairs))
+
+# Create pretty labels like "he/she"
+pair_labels <- setNames(
+  paste0(male_words, "/", female_words),
+  paste0("pair_", seq_along(male_words))
+)
+
+# Filter out any word pair groups that aren't present in the plot (those with no count)
+top_gendered_words <- top_gendered_words %>%
+  filter(word_pair_group %in% unique(top_gendered_words$word_pair_group))
+
+# Create plot
+ggplot(top_gendered_words, aes(x = factor(decade), y = display_count, fill = word_pair_group)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(
+    title = "Gendered Word Usage Over Time",
+    subtitle = paste0("Top words contributing to ", cumulative_threshold * 100, "% of word counts by decade and gender"),
+    x = "Decade",
+    y = "Word Count (Female values plotted negative)",
+    fill = "Word Pair"
+  ) +
+  scale_y_continuous(labels = abs) +
+  scale_fill_manual(
+    values = hue_pal()(length(pair_labels)),
+    labels = pair_labels[unique(top_gendered_words$word_pair_group)]
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 
 ```
