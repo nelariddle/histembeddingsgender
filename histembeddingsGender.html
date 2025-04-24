@@ -1548,18 +1548,19 @@ here are some examples:</p>
 <pre><code>## [1] &quot;able&quot;           &quot;accomplish&quot;     &quot;accomplishment&quot; &quot;accuracy&quot;      
 ## [5] &quot;accurate&quot;       &quot;achieve&quot;</code></pre>
 <pre class="r"><code>head(communal)</code></pre>
-<pre><code>## [1] &quot;accept&quot;        &quot;acceptable&quot;    &quot;acceptance&quot;    &quot;accommodate&quot;   &quot;accommodation&quot;
-## [6] &quot;accompany&quot;</code></pre>
+<pre><code>## [1] &quot;accept&quot;        &quot;acceptable&quot;    &quot;acceptance&quot;    &quot;accommodate&quot;  
+## [5] &quot;accommodation&quot; &quot;accompany&quot;</code></pre>
 <p>The group word lists were taken from <a href="https://pubmed.ncbi.nlm.nih.gov/35787033/" class="uri">https://pubmed.ncbi.nlm.nih.gov/35787033/</a>, as well as
 the trait list:</p>
 <pre class="r"><code>head(groupwrds$men)</code></pre>
 <pre><code>## [1] &quot;men&quot;         &quot;man&quot;         &quot;male&quot;        &quot;males&quot;       &quot;masculine&quot;  
 ## [6] &quot;masculinity&quot;</code></pre>
 <pre class="r"><code>head(groupwrds$women)</code></pre>
-<pre><code>## [1] &quot;women&quot;      &quot;woman&quot;      &quot;female&quot;     &quot;females&quot;    &quot;feminine&quot;   &quot;femininity&quot;</code></pre>
+<pre><code>## [1] &quot;women&quot;      &quot;woman&quot;      &quot;female&quot;     &quot;females&quot;    &quot;feminine&quot;  
+## [6] &quot;femininity&quot;</code></pre>
 <pre class="r"><code>head(trait)</code></pre>
-<pre><code>## [1] &quot;able&quot;          &quot;abrupt&quot;        &quot;absentminded&quot;  &quot;abusive&quot;       &quot;accommodating&quot;
-## [6] &quot;accurate&quot;</code></pre>
+<pre><code>## [1] &quot;able&quot;          &quot;abrupt&quot;        &quot;absentminded&quot;  &quot;abusive&quot;      
+## [5] &quot;accommodating&quot; &quot;accurate&quot;</code></pre>
 <p>The role titles were scraped off this site: <a href="https://theodora.com/dot_index.html" class="uri">https://theodora.com/dot_index.html</a>, a 1971 survey on
 role titles. They were merged with one-word titles from ONET, the modern
 equivalent: <a href="https://www.onetonline.org/find/all" class="uri">https://www.onetonline.org/find/all</a>. They were merged
@@ -2027,6 +2028,8 @@ plot_multiple_ts(men_women_agentic_communal_ts)</code></pre>
 <p>First, the raw counts can be viewed here:</p>
 <p><a href="gender_word_counts.csv">gender_word_counts.csv</a></p>
 <p><a href="gender_word_counts_genre_aggregated.csv">gender_word_counts_genre_aggregated.csv</a></p>
+<p>The data was generated through a python script that collected counts
+from the original text. Here is a preview:</p>
 <pre><code>##   genre decade gender      word count
 ## 1  acad   1820   male    blokes     0
 ## 2  acad   1820   male   himself   847
@@ -2034,16 +2037,138 @@ plot_multiple_ts(men_women_agentic_communal_ts)</code></pre>
 ## 4  acad   1820   male       man  1569
 ## 5  acad   1820   male      guys     0
 ## 6  acad   1820   male       men  1706</code></pre>
+<p>We also have access to the overall counts for each COHA decade in
+order to contextualize those for the gender words. They were acquired
+from <a href="https://www.english-corpora.org/coha/" class="uri">https://www.english-corpora.org/coha/</a>.</p>
+<pre class="r"><code>coha_counts &lt;- read.csv(&quot;overall_counts.csv&quot;)
+
+print(coha_counts)</code></pre>
+<pre><code>##    DECADE TV.MOVIES   FICTION POPULARMAGAZINES NEWSPAPERS NON.FICTIONBOOKS
+## 1   1820s        NA   3778554          1730991         NA          1471844
+## 2   1830s        NA   7492464          3158784         NA          3060039
+## 3   1840s        NA   8615569          3584996         NA          3606482
+## 4   1850s        NA   9175764          4243240         NA          3116999
+## 5   1860s        NA   9279356          4469061     264549          2923594
+## 6   1870s        NA  10454445          4489558    1037506          2806958
+## 7   1880s        NA  11204077          4489787    1368195          3005146
+## 8   1890s        NA  11261720          4716870    1392895          3055298
+## 9   1900s        NA  12096794          5092923    1464317          3323216
+## 10  1910s        NA  12266683          5727265    1548986          3560164
+## 11  1920s        NA  12668146          6132368    3642022          3257886
+## 12  1930s   2994552  11959731          6048788    3651557          3053251
+## 13  1940s   2888109  12030426          5841711    3567355          3072149
+## 14  1950s   4003700  12014411          5961487    3570759          3110917
+## 15  1960s   4991777  11652761          5884357    3434402          3159379
+## 16  1970s   4982750  11652921          5767353    3402783          3023418
+## 17  1980s   4995510  11664130          5980459    4125888          3085593
+## 18  1990s   5039323  13337688          7552995    4069742          3149570
+## 19  2000s   5078058  14624639          7813604    4116506          3189005
+## 20  2010s   5061478  15150555          7552354    4546307          3142112
+## 21  TOTAL  40035257 222380834        106238951   45203769         61173020
+##        TOTAL X..FICTION X..FIC..TV.MOV.
+## 1    6981389      54.1%           54.1%
+## 2   13711287      54.6%           54.6%
+## 3   15807047      54.5%           54.5%
+## 4   16536003      55.5%           55.5%
+## 5   16936560      54.8%           54.8%
+## 6   18788467      55.6%           55.6%
+## 7   20067205      55.8%           55.8%
+## 8   20426783      55.1%           55.1%
+## 9   21977250      55.0%           55.0%
+## 10  23103098      53.1%           53.1%
+## 11  25700422      49.3%           49.3%
+## 12  27707879      43.2%           54.0%
+## 13  27399750      43.9%           54.4%
+## 14  28661274      41.9%           55.9%
+## 15  29122676      40.0%           57.2%
+## 16  28829225      40.4%           57.7%
+## 17  29851580      39.1%           55.8%
+## 18  33149318      40.2%           55.4%
+## 19  34821812      42.0%           56.6%
+## 20  35452806      42.7%           57.0%
+## 21 475031831</code></pre>
+<p>We reshape it into tidy data like so:</p>
+<pre class="r"><code>library(tidyr)
+library(tidyverse)</code></pre>
+<pre><code>## Warning: package &#39;tidyverse&#39; was built under R version 4.3.3</code></pre>
+<pre><code>## Warning: package &#39;forcats&#39; was built under R version 4.3.3</code></pre>
+<pre><code>## Warning: package &#39;lubridate&#39; was built under R version 4.3.3</code></pre>
+<pre><code>## ── Attaching core tidyverse packages ────────────────────────────────────────────── tidyverse 2.0.0 ──
+## ✔ forcats   1.0.0     ✔ readr     2.1.4
+## ✔ lubridate 1.9.3     ✔ stringr   1.5.0
+## ✔ purrr     1.0.1     ✔ tibble    3.2.1
+## ── Conflicts ──────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+## ℹ Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors</code></pre>
+<pre class="r"><code>coha_counts_tidy &lt;- coha_counts %&gt;% slice(1:(n() - 1)) %&gt;%
+  pivot_longer(
+    cols = names(coha_counts)[-c(1, (ncol(coha_counts) - 2):ncol(coha_counts))],
+    names_to = &quot;genre&quot;,
+    values_to = &quot;count&quot;
+  ) %&gt;% mutate(decade = as.integer(str_remove(DECADE, &quot;s$&quot;))) %&gt;% select(decade, genre, count)
+
+coha_counts_tidy</code></pre>
+<pre><code>## # A tibble: 100 × 3
+##    decade genre              count
+##     &lt;int&gt; &lt;chr&gt;              &lt;int&gt;
+##  1   1820 TV.MOVIES             NA
+##  2   1820 FICTION          3778554
+##  3   1820 POPULARMAGAZINES 1730991
+##  4   1820 NEWSPAPERS            NA
+##  5   1820 NON.FICTIONBOOKS 1471844
+##  6   1830 TV.MOVIES             NA
+##  7   1830 FICTION          7492464
+##  8   1830 POPULARMAGAZINES 3158784
+##  9   1830 NEWSPAPERS            NA
+## 10   1830 NON.FICTIONBOOKS 3060039
+## # ℹ 90 more rows</code></pre>
+<pre class="r"><code>coha_counts_genre_aggregated &lt;-
+  coha_counts_tidy %&gt;%  group_by(decade) %&gt;% summarise(count = sum(count, na.rm = TRUE))
+
+coha_counts_genre_aggregated</code></pre>
+<pre><code>## # A tibble: 20 × 2
+##    decade    count
+##     &lt;int&gt;    &lt;int&gt;
+##  1   1820  6981389
+##  2   1830 13711287
+##  3   1840 15807047
+##  4   1850 16536003
+##  5   1860 16936560
+##  6   1870 18788467
+##  7   1880 20067205
+##  8   1890 20426783
+##  9   1900 21977250
+## 10   1910 23103098
+## 11   1920 25700422
+## 12   1930 27707879
+## 13   1940 27399750
+## 14   1950 28661274
+## 15   1960 29122676
+## 16   1970 28829225
+## 17   1980 29851580
+## 18   1990 33149318
+## 19   2000 34821812
+## 20   2010 35452806</code></pre>
+<p>Now we can find the relative frequency of each term by decade.</p>
 <pre><code>## Rows: 5780 Columns: 5
-## ── Column specification ─────────────────────────────────────────────────────────────
+## ── Column specification ──────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (3): genre, gender, word
 ## dbl (2): decade, count
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre><code>## 
+## Attaching package: &#39;scales&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:purrr&#39;:
+## 
+##     discard</code></pre>
+<pre><code>## The following object is masked from &#39;package:readr&#39;:
+## 
+##     col_factor</code></pre>
 <pre><code>## Rows: 5780 Columns: 5
-## ── Column specification ─────────────────────────────────────────────────────────────
+## ── Column specification ──────────────────────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (3): genre, gender, word
 ## dbl (2): decade, count

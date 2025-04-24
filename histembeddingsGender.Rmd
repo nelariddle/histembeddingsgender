@@ -818,18 +818,49 @@ First, the raw counts can be viewed here:
 
 [gender_word_counts_genre_aggregated.csv](gender_word_counts_genre_aggregated.csv)
 
+The data was generated through a python script that collected counts from the original text. Here is a preview:
+
 ```{r combineByGenre, warning=FALSE, echo=FALSE, fig.show="hide"}
-library(dplyr)
+gender_word_counts <- read.csv("gender_word_counts.csv")
 
-word_freq <- read.csv("gender_word_counts.csv")
+head(gender_word_counts)
+```
 
-head(word_freq)
+We also have access to the overall counts for each COHA decade in order to contextualize those for the gender words. They were acquired from https://www.english-corpora.org/coha/.
+
+```{r overallCounts}
+coha_counts <- read.csv("overall_counts.csv")
+
+print(coha_counts)
+```
+
+We reshape it into tidy data like so:
+
+```{r overallCountsShaped}
+library(tidyr)
+library(tidyverse)
+
+coha_counts_tidy <- coha_counts %>% slice(1:(n() - 1)) %>%
+  pivot_longer(
+    cols = names(coha_counts)[-c(1, (ncol(coha_counts) - 2):ncol(coha_counts))],
+    names_to = "genre",
+    values_to = "count"
+  ) %>% mutate(decade = as.integer(str_remove(DECADE, "s$"))) %>% select(decade, genre, count)
+
+coha_counts_tidy
+
+coha_counts_genre_aggregated <-
+  coha_counts_tidy %>%  group_by(decade) %>% summarise(count = sum(count, na.rm = TRUE))
+
+coha_counts_genre_aggregated
+```
+Now we can find the relative frequency of each term by decade.
+
+```{r genderFrequency}
+
 ```
 
 ```{r visualizingWordCounts, warning=FALSE, echo=FALSE, fig.show="hide"}
-# Load tidyverse
-library(tidyverse)
-
 # Read the CSV file
 gender_counts <- read_csv("gender_word_counts.csv")
 
