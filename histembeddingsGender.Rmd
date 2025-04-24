@@ -822,8 +822,11 @@ The data was generated through a python script that collected counts from the or
 
 ```{r combineByGenre, warning=FALSE, echo=FALSE, fig.show="hide"}
 gender_word_counts <- read.csv("gender_word_counts.csv")
+gender_word_counts_genre_aggregated <-
+  read.csv("gender_word_counts_genre_aggregated.csv")
 
 head(gender_word_counts)
+head(gender_word_counts_genre_aggregated)
 ```
 
 We also have access to the overall counts for each COHA decade in order to contextualize those for the gender words. They were acquired from https://www.english-corpora.org/coha/.
@@ -831,8 +834,9 @@ We also have access to the overall counts for each COHA decade in order to conte
 ```{r overallCounts}
 coha_counts <- read.csv("overall_counts.csv")
 
-print(coha_counts)
+head(coha_counts)
 ```
+Some have NA because genres TV and news weren't collected until later years.
 
 We reshape it into tidy data like so:
 
@@ -857,7 +861,9 @@ coha_counts_genre_aggregated
 Now we can find the relative frequency of each term by decade.
 
 ```{r genderFrequency}
+gender_word_frequencies<-gender_word_counts_genre_aggregated%>%merge(coha_counts_genre_aggregated, by.x = "decade", by.y="decade")%>%mutate(prop=count.x/count.y)
 
+head(gender_word_frequencies)
 ```
 
 ```{r visualizingWordCounts, warning=FALSE, echo=FALSE, fig.show="hide"}
