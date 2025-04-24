@@ -236,11 +236,8 @@ print(mac(
 We can also see a MAC score for an association across decades.
 
 ```{r mac by decade}
-for (i in 1:20) {
-  print(mac(as.matrix(wordvecs.dat[[i]]),
-            S = "teacher",
-            A = "woman")$P)
-}
+lapply(1:20, function(i) mac(as.matrix(wordvecs.dat[[i]]), S = "teacher", A = "woman")$P)
+
 ```
 
 Now, we will create some helper functions, starting with creating an empty dataframe to be filled in.
@@ -844,12 +841,26 @@ We reshape it into tidy data like so:
 library(tidyr)
 library(tidyverse)
 
-coha_counts_tidy <- coha_counts %>% slice(1:(n() - 1)) %>%
+genre_map <-
+  c(
+    "NON.FICTIONBOOKS" = "acad",
+    "FICTION" = "fic",
+    "POPULARMAGAZINES" = "mag",
+    "NEWSPAPERS" = "news",
+    "TV.MOVIES" = "tvm"
+  )
+
+coha_counts_tidy <- coha_counts %>%
+  slice(1:(n() - 1)) %>%
   pivot_longer(
     cols = names(coha_counts)[-c(1, (ncol(coha_counts) - 2):ncol(coha_counts))],
     names_to = "genre",
     values_to = "count"
-  ) %>% mutate(decade = as.integer(str_remove(DECADE, "s$"))) %>% select(decade, genre, count)
+  ) %>%
+  mutate(decade = as.integer(str_remove(DECADE, "s$")),
+         genre = recode(genre,!!!genre_map)) %>%
+  select(decade, genre, count)
+
 
 coha_counts_tidy
 
@@ -858,41 +869,56 @@ coha_counts_genre_aggregated <-
 
 coha_counts_genre_aggregated
 ```
-Now we can find the relative frequency of each term by decade.
+Now we can find the relative frequency of each term within a decade.
 
 ```{r genderFrequency}
-gender_word_frequencies<-gender_word_counts_genre_aggregated%>%merge(coha_counts_genre_aggregated, by.x = "decade", by.y="decade")%>%mutate(prop=count.x/count.y)
+gender_word_frequencies <-
+  gender_word_counts_genre_aggregated %>% merge(coha_counts_genre_aggregated,
+                                                by.x = "decade",
+                                                by.y = "decade") %>% mutate(prop = count.x / count.y) %>% select(decade, word, gender, prop)
 
 head(gender_word_frequencies)
 ```
 
-```{r visualizingWordCounts, warning=FALSE, echo=FALSE, fig.show="hide"}
-# Read the CSV file
-gender_counts <- read_csv("gender_word_counts.csv")
+We can also aggregate the words by gender:
 
-# Summarize total word counts
-df_summary <- gender_counts %>%
-  group_by(gender, word) %>%
-  summarise(total_count = sum(count), .groups = 'drop') %>%
-  arrange(desc(total_count))
+```{r freqByGender}
+gender_frequencies <-
+  gender_word_frequencies %>% group_by(gender, decade) %>% summarize(prop =
+                                                                       sum(prop))
 
-# Get top 15 words per gender
-top_words <- df_summary %>%
-  group_by(gender) %>%
-  slice_max(order_by = total_count, n = 15)
+head(gender_frequencies)
 
-# Create static bar plot
-ggplot(top_words, aes(x = reorder(word, total_count), y = total_count, fill = gender)) +
-  geom_col(show.legend = FALSE) +
-  coord_flip() +
-  facet_wrap(~gender, scales = "free_y") +
-  labs(title = "Top Gendered Words by Frequency",
-       x = "Word", y = "Total Count") +
-  theme_minimal()
-
-
+gender_frequencies %>% ggplot(aes(x = decade, y = prop, color = gender)) +
+  geom_point()+ggtitle("Proportion of COHA represented by gender categories")
 
 ```
+An analysis by genre, just for fun:
+
+```{r freqByGenderAndGenre}
+gender_word_frequencies_by_genre <-
+  gender_word_counts %>% merge(coha_counts_tidy,
+                                                by.x = c("decade", "genre"),
+                                                by.y = c("decade","genre")) %>% mutate(prop = count.x / count.y) %>% select(decade, genre, word, gender, prop)
+
+head(gender_word_frequencies_by_genre)
+```
+
+Meaning, in 1820, "men" represented about 1.15e-3 of the acad genre.
+
+```{r plotByGenre}
+gender_frequencies_by_genre <-
+  gender_word_frequencies_by_genre %>% group_by(decade, gender, genre) %>% summarise(prop =
+                                                                                       sum(prop))
+
+head(gender_frequencies_by_genre)
+
+gender_frequencies_by_genre %>% ggplot(aes(x = decade, y = prop, color = gender)) +
+  geom_point() + facet_wrap(vars(genre))+ggtitle("Proportion of genres in COHA by gender")
+
+```
+
+
 
 ```{r plot3, warning=FALSE, echo=FALSE, fig.show="hide"}
 # Load required libraries

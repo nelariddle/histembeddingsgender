@@ -223,52 +223,9 @@ lists with single words.
 
 We can also see a MAC score for an association across decades.
 
-    for (i in 1:20) {
-      print(mac(as.matrix(wordvecs.dat[[i]]),
-                S = "teacher",
-                A = "woman")$P)
-    }
+    plot(unlist(lapply(1:20, function(i) mac(as.matrix(wordvecs.dat[[i]]), S = "teacher", A = "woman")$P)))
 
-    ##    teacher 
-    ## 0.08251502 
-    ##    teacher 
-    ## 0.04303872 
-    ##   teacher 
-    ## 0.1437441 
-    ##   teacher 
-    ## 0.1632257 
-    ##   teacher 
-    ## 0.1293401 
-    ##   teacher 
-    ## 0.1992244 
-    ##   teacher 
-    ## 0.1495645 
-    ## teacher 
-    ## 0.10897 
-    ##   teacher 
-    ## 0.1993636 
-    ##    teacher 
-    ## 0.09378933 
-    ##   teacher 
-    ## 0.1421937 
-    ##   teacher 
-    ## 0.2339192 
-    ##   teacher 
-    ## 0.1998847 
-    ##   teacher 
-    ## 0.1615498 
-    ##   teacher 
-    ## 0.1453564 
-    ##   teacher 
-    ## 0.1693469 
-    ##   teacher 
-    ## 0.2083897 
-    ##   teacher 
-    ## 0.1208308 
-    ##   teacher 
-    ## 0.2176336 
-    ##   teacher 
-    ## 0.2165885
+![](histembeddingsGender_files/figure-markdown_strict/mac%20by%20decade-1.png)
 
 Now, we will create some helper functions, starting with creating an
 empty dataframe to be filled in.
@@ -702,28 +659,42 @@ We reshape it into tidy data like so:
     ## ✖ dplyr::lag()    masks stats::lag()
     ## ℹ Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors
 
-    coha_counts_tidy <- coha_counts %>% slice(1:(n() - 1)) %>%
+    genre_map <-
+      c(
+        "NON.FICTIONBOOKS" = "acad",
+        "FICTION" = "fic",
+        "POPULARMAGAZINES" = "mag",
+        "NEWSPAPERS" = "news",
+        "TV.MOVIES" = "tvm"
+      )
+
+    coha_counts_tidy <- coha_counts %>%
+      slice(1:(n() - 1)) %>%
       pivot_longer(
         cols = names(coha_counts)[-c(1, (ncol(coha_counts) - 2):ncol(coha_counts))],
         names_to = "genre",
         values_to = "count"
-      ) %>% mutate(decade = as.integer(str_remove(DECADE, "s$"))) %>% select(decade, genre, count)
+      ) %>%
+      mutate(decade = as.integer(str_remove(DECADE, "s$")),
+             genre = recode(genre,!!!genre_map)) %>%
+      select(decade, genre, count)
+
 
     coha_counts_tidy
 
     ## # A tibble: 100 × 3
-    ##    decade genre              count
-    ##     <int> <chr>              <int>
-    ##  1   1820 TV.MOVIES             NA
-    ##  2   1820 FICTION          3778554
-    ##  3   1820 POPULARMAGAZINES 1730991
-    ##  4   1820 NEWSPAPERS            NA
-    ##  5   1820 NON.FICTIONBOOKS 1471844
-    ##  6   1830 TV.MOVIES             NA
-    ##  7   1830 FICTION          7492464
-    ##  8   1830 POPULARMAGAZINES 3158784
-    ##  9   1830 NEWSPAPERS            NA
-    ## 10   1830 NON.FICTIONBOOKS 3060039
+    ##    decade genre   count
+    ##     <int> <chr>   <int>
+    ##  1   1820 tvm        NA
+    ##  2   1820 fic   3778554
+    ##  3   1820 mag   1730991
+    ##  4   1820 news       NA
+    ##  5   1820 acad  1471844
+    ##  6   1830 tvm        NA
+    ##  7   1830 fic   7492464
+    ##  8   1830 mag   3158784
+    ##  9   1830 news       NA
+    ## 10   1830 acad  3060039
     ## # ℹ 90 more rows
 
     coha_counts_genre_aggregated <-
@@ -755,28 +726,92 @@ We reshape it into tidy data like so:
     ## 19   2000 34821812
     ## 20   2010 35452806
 
-Now we can find the relative frequency of each term by decade.
+Now we can find the relative frequency of each term within a decade.
 
-    gender_frequencies<-gender_word_counts_genre_aggregated%>%merge(coha_counts_genre_aggregated, by.x = "decade", by.y="decade")%>%mutate(prop=count.x/count.y)
+    gender_word_frequencies <-
+      gender_word_counts_genre_aggregated %>% merge(coha_counts_genre_aggregated,
+                                                    by.x = "decade",
+                                                    by.y = "decade") %>% mutate(prop = count.x / count.y) %>% select(decade, word, gender, prop)
+
+    head(gender_word_frequencies)
+
+    ##   decade   word gender         prop
+    ## 1   1820  bloke   male 0.000000e+00
+    ## 2   1820 blokes   male 0.000000e+00
+    ## 3   1820    boy   male 1.546970e-04
+    ## 4   1820   boys   male 5.256834e-05
+    ## 5   1820  bride female 2.091274e-05
+    ## 6   1820 brides female 1.432380e-06
+
+We can also aggregate the words by gender:
+
+    gender_frequencies <-
+      gender_word_frequencies %>% group_by(gender, decade) %>% summarize(prop =
+                                                                           sum(prop))
+
+    ## `summarise()` has grouped output by 'gender'. You can override using the
+    ## `.groups` argument.
 
     head(gender_frequencies)
 
-    ##   decade   word gender count.x count.y         prop
-    ## 1   1820  bloke   male       0 6981389 0.000000e+00
-    ## 2   1820 blokes   male       0 6981389 0.000000e+00
-    ## 3   1820    boy   male    1080 6981389 1.546970e-04
-    ## 4   1820   boys   male     367 6981389 5.256834e-05
-    ## 5   1820  bride female     146 6981389 2.091274e-05
-    ## 6   1820 brides female      10 6981389 1.432380e-06
+    ## # A tibble: 6 × 3
+    ## # Groups:   gender [1]
+    ##   gender decade    prop
+    ##   <chr>   <int>   <dbl>
+    ## 1 female   1820 0.0104 
+    ## 2 female   1830 0.00834
+    ## 3 female   1840 0.00860
+    ## 4 female   1850 0.0115 
+    ## 5 female   1860 0.0124 
+    ## 6 female   1870 0.0151
 
-    ## Rows: 5780 Columns: 5
-    ## ── Column specification ──────────────────────────────────────────────────────────────────────────────────────
-    ## Delimiter: ","
-    ## chr (3): genre, gender, word
-    ## dbl (2): decade, count
-    ## 
-    ## ℹ Use `spec()` to retrieve the full column specification for this data.
-    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+    gender_frequencies %>% ggplot(aes(x = decade, y = prop, color = gender)) +
+      geom_point()+ggtitle("Proportion of COHA represented by gender categories")
+
+![](histembeddingsGender_files/figure-markdown_strict/freqByGender-1.png)
+An analysis by genre, just for fun:
+
+    gender_word_frequencies_by_genre <-
+      gender_word_counts %>% merge(coha_counts_tidy,
+                                                    by.x = c("decade", "genre"),
+                                                    by.y = c("decade","genre")) %>% mutate(prop = count.x / count.y) %>% select(decade, genre, word, gender, prop)
+
+    head(gender_word_frequencies_by_genre)
+
+    ##   decade genre      word gender         prop
+    ## 1   1820  acad    blokes   male 0.000000e+00
+    ## 2   1820  acad   himself   male 5.754686e-04
+    ## 3   1820  acad masculine   male 2.038259e-06
+    ## 4   1820  acad       man   male 1.066010e-03
+    ## 5   1820  acad      guys   male 0.000000e+00
+    ## 6   1820  acad       men   male 1.159090e-03
+
+Meaning, in 1820, “men” represented about 1.15e-3 of the acad genre.
+
+    gender_frequencies_by_genre <-
+      gender_word_frequencies_by_genre %>% group_by(decade, gender, genre) %>% summarise(prop =
+                                                                                           sum(prop))
+
+    ## `summarise()` has grouped output by 'decade', 'gender'. You can override using
+    ## the `.groups` argument.
+
+    head(gender_frequencies_by_genre)
+
+    ## # A tibble: 6 × 4
+    ## # Groups:   decade, gender [2]
+    ##   decade gender genre    prop
+    ##    <int> <chr>  <chr>   <dbl>
+    ## 1   1820 female acad  0.00324
+    ## 2   1820 female fic   0.0168 
+    ## 3   1820 female mag   0.00227
+    ## 4   1820 male   acad  0.0186 
+    ## 5   1820 male   fic   0.0318 
+    ## 6   1820 male   mag   0.0200
+
+    gender_frequencies_by_genre %>% ggplot(aes(x = decade, y = prop, color = gender)) +
+      geom_point() + facet_wrap(vars(genre))+ggtitle("Proportion of genres in COHA by gender")
+
+![](histembeddingsGender_files/figure-markdown_strict/plotByGenre-1.png)
 
     ## 
     ## Attaching package: 'scales'
