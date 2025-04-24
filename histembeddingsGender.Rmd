@@ -788,70 +788,7 @@ write_xlsx(overall_results_averages, "overall_results_averages.xlsx")
 ```
 [overall_results_averages.xlsx](overall_results_averages.xlsx)
 
-
-```{r freqData, echo=FALSE, warning=FALSE}
-setwd("wordstim") # set to wordstim folder or where you want to save the data
-
-traitextradat <- read.csv("traitextradat.csv", header = TRUE)
-freqavg_dat <- read.csv("freqav_dat.csv", header = TRUE)
-freqavg_dat <- freqavg_dat %>%
-  rename(
-    trait = X,      # Rename "X" to "trait"
-    freq = freq,    # Keep "freq" as it is
-    word = word     # Keep "word" as it is
-  )
-setwd("..")
-```
-
-
-```{r freqPlotting, warning=FALSE, echo=FALSE, fig.show="hide"}
-plot_one_decade_shaded <- function(decade_data) {
-  # Extract attributes
-  group1 <- attr(decade_data, "group1index")
-  group2 <- attr(decade_data, "group2index")
-  word_term <- attr(decade_data, "wordterms")
-  corpus <- attr(decade_data, "corpus")
-  decade <- attr(decade_data, "decade")
-  # Calculate Pearson correlation
-  pearson_corr <-
-    cor(decade_data$grp1ef, decade_data$grp2ef, use = "complete.obs")
-  decade_data <- merge(decade_data, freqavg_dat, by = "trait", all.x = TRUE)
-
-  # Create title
-  title <- paste0(
-    group1,
-    " vs ",
-    group2,
-    ", ",
-    word_term,
-    " (",
-    corpus,
-    ", ",
-    decade,
-    ", r = ",
-    round(pearson_corr, 2),
-    ")"
-  )
-  # Create plot with freq shading
-  p <-
-    decade_data %>% ggplot(aes(x = grp1ef, y = grp2ef, color = log10(freq))) +
-    geom_point() +
-    geom_smooth(method = "lm", formula = y ~ x) +
-    geom_text(aes(label = trait), vjust = -0.5, size = 3) +
-    scale_color_gradient(low = "darkblue",
-                         high = "darkred",
-                         name = "log(Frequency)") +
-    labs(title = title, x = group1, y = group2) +
-    theme_minimal()
-  
-  return(p)
-}
-plot_one_decade_shaded(get_decade("men", "women", "communal", "engall", 1990))
-plot_one_decade_shaded(get_decade("nonhuman", "men", "communal", "coha", 1980))
-
-```
-
-Plots combined
+### Plots, engall+coha
 ```{r extraStuff, warning=FALSE}
 men_women_trait_role_ts <-
   list(
@@ -876,6 +813,7 @@ plot_multiple_ts(men_women_agentic_communal_ts)
 ### Analysis of word count by gender
 
 First, the raw counts can be viewed here:
+
 [gender_word_counts.csv](gender_word_counts.csv)
 
 [gender_word_counts_genre_aggregated.csv](gender_word_counts_genre_aggregated.csv)
@@ -883,16 +821,9 @@ First, the raw counts can be viewed here:
 ```{r combineByGenre, warning=FALSE, echo=FALSE, fig.show="hide"}
 library(dplyr)
 
-# Read the CSV
-df <- read.csv("gender_word_counts.csv")
+word_freq <- read.csv("gender_word_counts.csv")
 
-# Group by decade, gender, and word, then sum the counts
-aggregated_df <- df %>%
-  group_by(decade, gender, word) %>%
-  summarise(total_count = sum(count), .groups = "drop")
-
-# Write to CSV without quotes
-write.csv(aggregated_df, "aggregated_gender_word_counts.csv", row.names = FALSE, quote = FALSE)
+head(word_freq)
 ```
 
 ```{r visualizingWordCounts, warning=FALSE, echo=FALSE, fig.show="hide"}
@@ -923,89 +854,6 @@ ggplot(top_words, aes(x = reorder(word, total_count), y = total_count, fill = ge
   theme_minimal()
 
 
-
-```
-
-```{r plot2, warning=FALSE, echo=FALSE, fig.show="hide"}
-library(tidyverse)
-
-# Your paired word lists
-male_words <- c(
-  "men", "man", "male", "males", "masculine", "masculinity",
-  "he", "him", "his", "himself",
-  "mr", "mister",
-  "boy", "boys",
-  "guy", "guys",
-  "fella", "fellas",
-  "gent", "gents",
-  "sir", "sirs",
-  "lad", "lads",
-  "gentleman", "gentlemen",
-  "prince", "princes",
-  "king", "kings"
-)
-
-female_words <- c(
-  "women", "woman", "female", "females", "feminine", "femininity",
-  "she", "her", "hers", "herself",
-  "mrs", "ms",
-  "girl", "girls",
-  "gal", "gals",
-  "lass", "lassie",
-  "dame", "dames",
-  "madam", "miss",
-  "maiden", "maidens",
-  "gentlewoman", "gentlewomen",
-  "princess", "princesses",
-  "queen", "queens"
-)
-
-
-
-# Combine into one dataframe
-word_pairs <- tibble(
-  concept = paste0("pair_", seq_along(male_words)),
-  male = male_words,
-  female = female_words
-)
-
-# Load your word count CSV
-df <- read_csv("gender_word_counts.csv")
-
-# Filter to only those words in our lists
-df_filtered <- df %>%
-  filter(word %in% c(male_words, female_words))
-
-# Build pairing table
-pair_df <- data.frame(male = male_words, female = female_words)
-
-# Create a lookup for pairing
-word_pair_map <- c(setNames(pair_df$male, pair_df$male),
-                   setNames(pair_df$male, pair_df$female))
-
-df_paired <- df_filtered %>%
-  mutate(pair = word_pair_map[word]) %>%
-  mutate(direction = ifelse(gender == "male", "male", "female"),
-         count_signed = ifelse(gender == "male", count, -count))
-
-# Aggregate by word and pair (if needed across multiple genres/decades)
-plot_df <- df_paired %>%
-  group_by(pair, word, direction) %>%
-  summarise(count_signed = sum(count_signed), .groups = "drop")
-
-# Plot
-ggplot(plot_df, aes(x = count_signed, y = reorder(pair, abs(count_signed)), fill = direction)) +
-  geom_bar(stat = "identity", position = "identity") +
-  scale_fill_manual(values = c("male" = "#3498db", "female" = "#e74c3c")) +
-  scale_x_continuous(labels = abs) +
-  labs(
-    title = "Mirrored Gendered Word Counts",
-    x = "Word Count",
-    y = "Word Pair",
-    fill = "Gender"
-  ) +
-  theme_minimal() +
-  theme(axis.text.y = element_text(size = 10))
 
 ```
 

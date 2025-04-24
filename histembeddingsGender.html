@@ -2000,7 +2000,9 @@ excel:</p>
 ## 6 1850 0.011462237         men   agentic engall</code></pre>
 <pre class="r"><code>write_xlsx(overall_results_averages, &quot;overall_results_averages.xlsx&quot;)</code></pre>
 <p><a href="overall_results_averages.xlsx">overall_results_averages.xlsx</a></p>
-<p>Plots combined</p>
+</div>
+<div id="plots-engallcoha" class="section level3">
+<h3>Plots, engall+coha</h3>
 <pre class="r"><code>men_women_trait_role_ts &lt;-
   list(
     get_ts(&quot;men&quot;, &quot;women&quot;, &quot;trait&quot;, &quot;engall&quot;),
@@ -2022,24 +2024,16 @@ plot_multiple_ts(men_women_agentic_communal_ts)</code></pre>
 </div>
 <div id="analysis-of-word-count-by-gender" class="section level3">
 <h3>Analysis of word count by gender</h3>
-<p>First, the raw counts can be viewed here: <a href="gender_word_counts.csv">gender_word_counts.csv</a> <a href="gender_word_counts_genre_aggregated.csv">gender_word_counts_genre_aggregated.csv</a></p>
-<pre><code>## ── Attaching core tidyverse packages ───────────────────────────── tidyverse 2.0.0 ──
-## ✔ forcats   1.0.0     ✔ stringr   1.5.0
-## ✔ lubridate 1.9.3     ✔ tibble    3.2.1
-## ✔ purrr     1.0.1     ✔ tidyr     1.3.0
-## ✔ readr     2.1.4     
-## ── Conflicts ─────────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ dplyr::filter() masks stats::filter()
-## ✖ dplyr::lag()    masks stats::lag()
-## ℹ Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors
-## Rows: 5780 Columns: 5
-## ── Column specification ─────────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (3): genre, gender, word
-## dbl (2): decade, count
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>First, the raw counts can be viewed here:</p>
+<p><a href="gender_word_counts.csv">gender_word_counts.csv</a></p>
+<p><a href="gender_word_counts_genre_aggregated.csv">gender_word_counts_genre_aggregated.csv</a></p>
+<pre><code>##   genre decade gender      word count
+## 1  acad   1820   male    blokes     0
+## 2  acad   1820   male   himself   847
+## 3  acad   1820   male masculine     3
+## 4  acad   1820   male       man  1569
+## 5  acad   1820   male      guys     0
+## 6  acad   1820   male       men  1706</code></pre>
 <pre><code>## Rows: 5780 Columns: 5
 ## ── Column specification ─────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
@@ -2048,14 +2042,6 @@ plot_multiple_ts(men_women_agentic_communal_ts)</code></pre>
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre><code>## 
-## Attaching package: &#39;scales&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:purrr&#39;:
-## 
-##     discard</code></pre>
-<pre><code>## The following object is masked from &#39;package:readr&#39;:
-## 
-##     col_factor</code></pre>
 <pre><code>## Rows: 5780 Columns: 5
 ## ── Column specification ─────────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
