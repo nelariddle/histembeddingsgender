@@ -12,6 +12,10 @@ author: Nela Riddle
 
 We load in the required packages.
 
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
 ```{r loadPackages, echo = FALSE, message=FALSE, warning=FALSE}
 ########################################################
 
@@ -152,20 +156,6 @@ grpwrdassoc_rel <-
       2010
     else
       1990
-    
-    # Create lists of the group's available words
-    
-    # availwrds_decade_group1 <-
-    #   lapply(1:length(wordvecs.dat), function(i) {
-    #     groupwrds[, group1index][groupwrds[, group1index] != "" &
-    #                                !groupwrds[, group1index] %in% unavwords[[i]]]
-    #   })
-    # 
-    # availwrds_decade_group2 <-
-    #   lapply(1:length(wordvecs.dat), function(i) {
-    #     groupwrds[, group2index][groupwrds[, group2index] != "" &
-    #                                !groupwrds[, group2index] %in% unavwords[[i]]]
-    #   })
     
     availwrds_decade_group1 <-
       lapply(1:length(wordvecs.dat), function(i) {
@@ -580,7 +570,6 @@ colnames(groupmiss2_coha) <- colnames(groupwrds)
 # Add the year column
 rownames(groupmiss2_coha) <- seq(1820, 2010, by = 10)
 groupmiss2_coha$year <- seq(1820, 2010, by = 10)
-groupmiss2_coha
 ```
 
 ```{r plotMissingCoha}
@@ -634,7 +623,6 @@ colnames(groupmiss2) <- colnames(groupwrds)
 # Add the year column
 rownames(groupmiss2) <- seq(1800, 1990, by = 10)
 groupmiss2$year <- seq(1800, 1990, by = 10)
-groupmiss2
 ```
 
 ```{r plotMissingEngall}
@@ -855,20 +843,6 @@ men_women_trait_role_ts <-
 plot_multiple_ts_averages(men_women_trait_role_ts)
 ```
 
-### Data in excel format
-Access the files containing all the data, which can be filtered in excel:
-```{r overallCSV}
-head(overall_results)
-write_xlsx(overall_results, "overall_results.xlsx")
-```
-[overall_results.xlsx](overall_results.xlsx)
-
-```{r overallCSVaverages}
-head(overall_results_averages)
-write_xlsx(overall_results_averages, "overall_results_averages.xlsx")
-```
-[overall_results_averages.xlsx](overall_results_averages.xlsx)
-
 ### Plots, engall+coha
 ```{r extraStuff, warning=FALSE}
 men_women_trait_role_ts <-
@@ -901,7 +875,7 @@ First, the raw counts can be viewed here:
 
 The data was generated through a python script that collected counts from the original text. Here is a preview:
 
-```{r combineByGenre, warning=FALSE, echo=FALSE, fig.show="hide"}
+```{r combineByGenre, warning=FALSE, fig.show="hide"}
 gender_word_counts <- read.csv("gender_word_counts.csv")
 gender_word_counts_genre_aggregated <-
   read.csv("gender_word_counts_genre_aggregated.csv")
@@ -951,7 +925,7 @@ coha_counts_tidy
 coha_counts_genre_aggregated <-
   coha_counts_tidy %>%  group_by(decade) %>% summarise(count = sum(count, na.rm = TRUE))
 
-coha_counts_genre_aggregated
+head(coha_counts_genre_aggregated)
 ```
 Now we can find the relative frequency of each term within a decade.
 
@@ -969,12 +943,13 @@ We can also aggregate the words by gender:
 ```{r freqByGender}
 gender_frequencies <-
   gender_word_frequencies %>% group_by(gender, decade) %>% summarize(prop =
-                                                                       sum(prop))
+                                                                       sum(prop), .groups =
+                                                                       "drop")
 
 head(gender_frequencies)
 
 gender_frequencies %>% ggplot(aes(x = decade, y = prop, color = gender)) +
-  geom_point()+ggtitle("Representation of gender in COHA")
+  geom_point() + ggtitle("Representation of gender in COHA")
 
 ```
 An analysis by genre, just for fun:
@@ -992,19 +967,17 @@ Meaning, in 1820, "men" represented about 1.15e-3 of the acad genre.
 
 ```{r plotByGenre}
 gender_frequencies_by_genre <-
-  gender_word_frequencies_by_genre %>% group_by(decade, gender, genre) %>% summarise(prop =
-                                                                                       sum(prop))
+  gender_word_frequencies_by_genre %>% group_by(decade, gender, genre) %>% summarise(prop =                                                                   sum(prop), .groups="drop")
 
 head(gender_frequencies_by_genre)
 
 gender_frequencies_by_genre %>% ggplot(aes(x = decade, y = prop, color = gender)) +
   geom_point() + facet_wrap(vars(genre)) + ggtitle("Representation of COHA genres by gender")
 ```
+
 We can try and see which words are making the most contribution.
 
 ```{r freqByWord}
-gender_word_frequencies
-
 gender_word_frequencies_cumulative_proportion <- 
   gender_word_frequencies %>%
   group_by(decade, gender) %>%
@@ -1015,7 +988,7 @@ gender_word_frequencies_cumulative_proportion <-
   ) %>%
   ungroup() %>% select(decade, word, gender, prop, cum_prop_of_group)
 
-gender_word_frequencies_cumulative_proportion%>%filter(gender=="female")
+head(gender_word_frequencies_cumulative_proportion%>%filter(gender=="female"))
 
 gender_word_frequencies_cumulative_proportion %>%
   filter(decade %% 70 == 20) %>%
@@ -1046,8 +1019,30 @@ gender_word_frequencies_cumulative_proportion %>%
   ))
 
 ```
+
 Clearly, a small number of words is making a large contribution to each gender group.
 
+We can look at how the male-female representation gap relates to the similarity scores for some time series.
+
+```{r genderGapSimilarity}
+role_ts<-get_ts("men", "women", "role", "coha", TRUE)
+
+gender_frequencies_ratio <- gender_frequencies %>%
+  group_by(decade) %>%
+  summarize(
+    female_to_male = prop[gender == "female"] / prop[gender == "male"],
+    .groups = "drop"
+  )
+
+gender_frequencies_ratio_merge_ts <-
+  gender_frequencies_ratio %>% cbind(role_ts)
+
+gender_frequencies_ratio_merge_ts %>% ggplot(aes(x = female_to_male, y =
+                                                   role_ts, color=decade)) + geom_point() + geom_smooth(method = "lm")
+
+```
+
+As the female:male count ratio approached 1, similarity scores for roles increased.
 
 ### Analyses, repeated but with parallelized lists
 
@@ -1093,3 +1088,17 @@ men_women_trait_role_ts <-
 plot_multiple_ts_averages(men_women_trait_role_ts)
 
 ```
+
+### Data in excel format
+Access the files containing all the data, which can be filtered in excel:
+```{r overallCSV}
+head(overall_results)
+write_xlsx(overall_results, "overall_results.xlsx")
+```
+[overall_results.xlsx](overall_results.xlsx)
+
+```{r overallCSVaverages}
+head(overall_results_averages)
+write_xlsx(overall_results_averages, "overall_results_averages.xlsx")
+```
+[overall_results_averages.xlsx](overall_results_averages.xlsx)
