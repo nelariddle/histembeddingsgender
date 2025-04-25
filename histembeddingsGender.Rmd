@@ -96,7 +96,7 @@ head(agentic)
 head(communal)
 ```
 
-The group word lists were taken from https://pubmed.ncbi.nlm.nih.gov/35787033/, as well as the trait list:
+The group word lists were taken from https://pubmed.ncbi.nlm.nih.gov/35787033/, as well as the trait list. The choice was made to remove "bride" because the male equivalent is ambiguous, as well as "miss." "Womanly" was not in the original source code but was added.x
 ```{r groupExamples}
 head(groupwrds$men)
 head(groupwrds$women)
@@ -141,29 +141,66 @@ grpwrdassoc_rel <-
            wordterms,
            wordvecs.dat = wordvecs.dat,
            unavwords = unavwords,
-           corpus) {
+           corpus,
+           parallelize = FALSE) {
+    
     start_year <- if (corpus == "coha")
-      1810
+      1820
     else
       1800
     end_year <- if (corpus == "coha")
-      2000
+      2010
     else
       1990
     
     # Create lists of the group's available words
+    
+    # availwrds_decade_group1 <-
+    #   lapply(1:length(wordvecs.dat), function(i) {
+    #     groupwrds[, group1index][groupwrds[, group1index] != "" &
+    #                                !groupwrds[, group1index] %in% unavwords[[i]]]
+    #   })
+    # 
+    # availwrds_decade_group2 <-
+    #   lapply(1:length(wordvecs.dat), function(i) {
+    #     groupwrds[, group2index][groupwrds[, group2index] != "" &
+    #                                !groupwrds[, group2index] %in% unavwords[[i]]]
+    #   })
+    
     availwrds_decade_group1 <-
       lapply(1:length(wordvecs.dat), function(i) {
-        groupwrds[, group1index][groupwrds[, group1index] != "" &
-                                   !groupwrds[, group1index] %in% unavwords[[i]]]
+        g1_words <- groupwrds[, group1index]
+        g2_words <- groupwrds[, group2index]
+        
+        # Remove unavailable words for this decade
+        valid_g1 <- g1_words != "" & !(g1_words %in% unavwords[[i]])
+        valid_g2 <- g2_words != "" & !(g2_words %in% unavwords[[i]])
+        
+        if (parallelize) {
+          # Only include where both group1 and group2 words at that index are valid
+          valid <- valid_g1 & valid_g2
+          g1_words[valid]
+        } else {
+          g1_words[valid_g1]
+        }
       })
     
     availwrds_decade_group2 <-
       lapply(1:length(wordvecs.dat), function(i) {
-        groupwrds[, group2index][groupwrds[, group2index] != "" &
-                                   !groupwrds[, group2index] %in% unavwords[[i]]]
+        g1_words <- groupwrds[, group1index]
+        g2_words <- groupwrds[, group2index]
+        
+        valid_g1 <- g1_words != "" & !(g1_words %in% unavwords[[i]])
+        valid_g2 <- g2_words != "" & !(g2_words %in% unavwords[[i]])
+        
+        if (parallelize) {
+          valid <- valid_g1 & valid_g2
+          g2_words[valid]
+        } else {
+          g2_words[valid_g2]
+        }
       })
-    
+
     availwrds_decade_wordterms <-
       lapply(1:length(wordvecs.dat), function(i) {
         wordterms[!wordterms %in% unavwords[[i]]]
@@ -233,10 +270,10 @@ print(mac(
   A = "sad"
 )$P)
 ```
-We can also see a MAC score for an association across decades.
+We can also see a MAC score for an association across decades; 1:5 indicates the first 5 decades available for engall.
 
 ```{r mac by decade}
-lapply(1:20, function(i) mac(as.matrix(wordvecs.dat[[i]]), S = "teacher", A = "woman")$P)
+lapply(1:5, function(i) mac(as.matrix(wordvecs.dat[[i]]), S = "teacher", A = "woman")$P)
 
 ```
 
@@ -244,7 +281,7 @@ Now, we will create some helper functions, starting with creating an empty dataf
 
 This custom function is built for our research question. It takes two sets of group words (e.g., man and woman words), a set of word terms (e.g., agency), and a corpus term (i.e., to define either engall or coha). It then calls the above workhorse function, computing the cosine similarities and then the higher-order correlations i.e., grpwrdassoc_rel
 
-The get_data_internal function  can be flexibly called for the whole time period or for a specific decade, converting into an easier-to-work-with dataframe.
+The get_data_internal function can be flexibly called for the whole time period or for a specific decade, converting into an easier-to-work-with dataframe.
 
 The get_ts and get_decade functions are just simple-use wrappers for the above function. This likely helps to prevent mistakes.
 
@@ -254,10 +291,21 @@ overall_results <- data.frame()
 generate_data <- function(group1index,
                           group2index,
                           wordterms,
-                          corpus) {
-  file_path <- paste0("outputs/",
-                      paste(group1index, group2index, wordterms, corpus, sep = "_"),
-                      ".RData")
+                          corpus,
+                          parallelize = FALSE) {
+  file_path <- paste0(
+    "outputs/",
+    paste(
+      group1index,
+      group2index,
+      wordterms,
+      corpus,
+      parallelize,
+      sep = "_"
+    ),
+    ".RData"
+  )
+  
   if (file.exists(file_path)) {
     # Load the object from the .RData file into a temporary environment
     temp_env <- new.env()
@@ -277,7 +325,8 @@ generate_data <- function(group1index,
       wordterms = get(wordterms),
       wordvecs.dat = wordvecs.dat_selected,
       unavwords = unavwords_selected,
-      corpus = corpus
+      corpus = corpus,
+      parallelize = parallelize
     )
     
     if (!dir.exists("outputs")) {
@@ -293,13 +342,15 @@ get_data_internal <- function(group1index,
                               group2index,
                               wordterms,
                               corpus,
-                              decade = NULL) {
+                              decade = NULL,
+                              parallelize = FALSE) {
   # Generate the data
   data <- generate_data(
     group1index = group1index,
     group2index = group2index,
     wordterms = wordterms,
-    corpus = corpus
+    corpus = corpus,
+    parallelize = parallelize
   )
   
   # Select the output based on the `decade`
@@ -316,9 +367,9 @@ get_data_internal <- function(group1index,
       group1index = group1index,
       group2index = group2index,
       wordterms = wordterms,
-      corpus = corpus
+      corpus = corpus,
+      parallelize = parallelize
     )
-    
     
     # Check if the combination already exists in the data frame
     existing <- overall_results %>%
@@ -326,7 +377,8 @@ get_data_internal <- function(group1index,
         group1index == !!group1index,
         group2index == !!group2index,
         wordterms == !!wordterms,
-        corpus == !!corpus
+        corpus == !!corpus,
+        parallelize == !!parallelize
       )
     
     # Append to the global results data frame only if the combination is new
@@ -335,7 +387,7 @@ get_data_internal <- function(group1index,
     }
   } else {
     if (corpus == "coha") {
-      output <- data[[1]][[(decade - 1800) / 10]]
+      output <- data[[1]][[(decade - 1810) / 10]]
     } else {
       output <- data[[1]][[(decade - 1790) / 10]]
     }
@@ -347,6 +399,8 @@ get_data_internal <- function(group1index,
   attr(output, "group2index") <- group2index
   attr(output, "wordterms") <- wordterms
   attr(output, "corpus") <- corpus
+  attr(output, "parallelize") <- parallelize
+  
   
   
   # Return the output regardless
@@ -357,8 +411,9 @@ get_data_internal <- function(group1index,
 get_ts <- function(group1index,
                    group2index,
                    wordterms,
-                   corpus) {
-  get_data_internal(group1index, group2index, wordterms, corpus)
+                   corpus,
+                   parallelize = FALSE) {
+  get_data_internal(group1index, group2index, wordterms, corpus, parallelize=parallelize)
 }
 
 get_decade <-
@@ -366,8 +421,14 @@ get_decade <-
            group2index,
            wordterms,
            corpus,
-           decade) {
-    get_data_internal(group1index, group2index, wordterms, corpus, decade = decade)
+           decade,
+           parallelize = FALSE) {
+    get_data_internal(group1index,
+                      group2index,
+                      wordterms,
+                      corpus,
+                      decade = decade,
+                      parallelize)
   }
 
 ```
@@ -375,17 +436,18 @@ get_decade <-
 Now, we test everything we have so far.
 
 ```{r sampleCalls, echo = FALSE}
-ts1 <- get_ts("men", "women", "agentic", "engall")
-ts2 <- get_ts("men", "women", "communal", "coha")
-ts3 <- get_ts("men", "women", "noun", "coha")
-ts4 <- get_ts("nonhuman", "women", "noun", "coha")
+# ts1 <- get_ts("men", "women", "agentic", "engall")
+# ts2 <- get_ts("men", "women", "agentic", "coha")
+# ts3 <- get_ts("nonhuman", "women", "noun", "coha")
+ts2 <- get_ts("men", "women", "agentic", "coha", TRUE)
 
 
 
-decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
-decade2 <- get_decade("men", "women", "agentic", "coha", 1810)
-decade2 <- get_decade("men", "women", "noun", "coha", 2000)
+
+# decade1 <- get_decade("men", "women", "agentic", "engall", 1800)
+# decade2 <- get_decade("men", "women", "agentic", "coha", 1820)
 ```
+
 Now, we are creating functions for dynamic visualizations.
 
 ```{r makePlotsRevised, echo=FALSE, message=FALSE, warning=FALSE}
@@ -433,7 +495,7 @@ plot_multiple_ts <- function(ts_list) {
     )) +
     geom_line() +
     labs(title = "Multiple Time Series Plot, Correlations", x = "Year", y = "Correlation Coefficient") +
-    facet_wrap( ~ corpus, scales = "fixed") +
+    facet_wrap(~ corpus, scales = "fixed") +
     scale_y_continuous(limits = c(y_min, y_max)) +
     theme_minimal() + guides(color = guide_legend(title = NULL))
   
@@ -489,7 +551,7 @@ The correlation between men-agentic and women-agentic cosine similarities in coh
 
 
 ```{r plottingDecade, warning=FALSE}
-plot_one_decade(get_decade("men", "women", "agentic", "coha", 1810))
+plot_one_decade(get_decade("men", "women", "agentic", "coha", 1820))
 plot_one_decade(get_decade("men", "women", "agentic", "engall", 1800))
 plot_one_decade(get_decade("men", "women", "role", "engall", 1950))
 
@@ -498,7 +560,7 @@ plot_one_decade(get_decade("men", "women", "role", "engall", 1950))
 The titles of the plots contain the Pearson coefficient, which is what we will use to measure the similarity of the two groups.
 
 ### Outlier analysis
-Noticing that the 1810 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing the slope.
+Noticing that the 1820 coha plot had an odd correlation, let's check the proportion of gender words that were available, as this could be skewing the slope.
 ```{r propMissingCoha}
 # Calculate the number of missing group words by decade
 groupmiss_coha <-
@@ -516,8 +578,8 @@ groupmiss2_coha <-
 colnames(groupmiss2_coha) <- colnames(groupwrds)
 
 # Add the year column
-rownames(groupmiss2_coha) <- seq(1810, 2000, by = 10)
-groupmiss2_coha$year <- seq(1810, 2000, by = 10)
+rownames(groupmiss2_coha) <- seq(1820, 2010, by = 10)
+groupmiss2_coha$year <- seq(1820, 2010, by = 10)
 groupmiss2_coha
 ```
 
@@ -622,19 +684,40 @@ plot_multiple_ts(men_women_agentic_communal_ts)
 
 Now, let's look at the actual magnitudes of the mac scores (rather than the Pearson correlations). To do this, we take the mean of all mac scores with a single group.
 ```{r meanFunc, echo=FALSE}
-overall_results_averages<-data.frame()
+overall_results_averages <- data.frame()
 
 get_ts_averages <- function(group1index,
                             wordterms,
-                            corpus) {
+                            corpus,
+                            parallelize = FALSE) {
   if (corpus == "coha") {
-    years <- seq(1810, 2000, by = 10)
+    years <- seq(1820, 2010, by = 10)
   } else {
     years <- seq(1800, 1990, by = 10)
   }
   output <- sapply(years, function(year) {
-    mean(get_decade(group1index, "women", wordterms, corpus, year)$grp1ef,
-         na.rm = TRUE)
+    if (group1index == "men") {
+      mean(
+        get_decade(
+          group1index,
+          "women",
+          wordterms,
+          corpus,
+          year,
+          parallelize = parallelize
+        )$grp1ef,
+        na.rm = TRUE
+      )
+    } else if (group1index == "women") {
+      mean(
+        get_decade("men", "women", wordterms, corpus, year, parallelize = parallelize)$grp2ef,
+        na.rm = TRUE
+      )
+    }
+    else{
+      mean(get_decade(group1index, "women", wordterms, corpus, year)$grp2ef,
+           na.rm = TRUE)
+    }
   })
   
   output <-
@@ -662,7 +745,8 @@ get_ts_averages <- function(group1index,
   
   # Append to the global results data frame only if the combination is new
   if (nrow(existing) == 0) {
-    overall_results_averages <<- bind_rows(overall_results_averages, new_entry)
+    overall_results_averages <<-
+      bind_rows(overall_results_averages, new_entry)
   }
   
   
@@ -890,7 +974,7 @@ gender_frequencies <-
 head(gender_frequencies)
 
 gender_frequencies %>% ggplot(aes(x = decade, y = prop, color = gender)) +
-  geom_point()+ggtitle("Proportion of COHA represented by gender categories")
+  geom_point()+ggtitle("Representation of gender in COHA")
 
 ```
 An analysis by genre, just for fun:
@@ -914,123 +998,98 @@ gender_frequencies_by_genre <-
 head(gender_frequencies_by_genre)
 
 gender_frequencies_by_genre %>% ggplot(aes(x = decade, y = prop, color = gender)) +
-  geom_point() + facet_wrap(vars(genre))+ggtitle("Proportion of genres in COHA by gender")
-
+  geom_point() + facet_wrap(vars(genre)) + ggtitle("Representation of COHA genres by gender")
 ```
+We can try and see which words are making the most contribution.
 
+```{r freqByWord}
+gender_word_frequencies
 
-
-```{r plot3, warning=FALSE, echo=FALSE, fig.show="hide"}
-# Load required libraries
-library(dplyr)
-library(ggplot2)
-library(readr)
-library(tidyr)
-library(scales)
-
-# Read the dataset
-gender_word_counts <- read_csv("gender_word_counts.csv")
-
-# Define word pair lists
-male_words <- c(
-  "men", "man", "male", "males", "masculine", "masculinity",
-  "he", "him", "his", "himself",
-  "mr", "mister",
-  "boy", "boys",
-  "guy", "guys",
-  "fella", "fellas",
-  "gent", "gents",
-  "sir", "sirs",
-  "lad", "lads",
-  "gentleman", "gentlemen",
-  "prince", "princes",
-  "king", "kings"
-)
-
-female_words <- c(
-  "women", "woman", "female", "females", "feminine", "femininity",
-  "she", "her", "hers", "herself",
-  "mrs", "ms",
-  "girl", "girls",
-  "gal", "gals",
-  "lass", "lassie",
-  "dame", "dames",
-  "madam", "miss",
-  "maiden", "maidens",
-  "gentlewoman", "gentlewomen",
-  "princess", "princesses",
-  "queen", "queens"
-)
-
-# Build a lookup table of word -> word_pair_group
-word_pair_groups <- data.frame(
-  male_word = male_words,
-  female_word = female_words,
-  word_pair_group = paste0("pair_", seq_along(male_words))
-) %>%
-  pivot_longer(cols = c(male_word, female_word),
-               names_to = "original_gender",
-               values_to = "word") %>%
-  select(word, word_pair_group)
-
-# Merge and keep only gendered words
-gendered_data_grouped <- gender_word_counts %>%
-  inner_join(word_pair_groups, by = "word")
-
-# Define the cumulative proportion threshold (e.g., 99% for top 99% of word counts)
-cumulative_threshold <- 0.5  # Change this value as needed (e.g., 0.90 for 90%)
-
-# Filter to top words by cumulative proportion
-top_gendered_words <- gendered_data_grouped %>%
+gender_word_frequencies_cumulative_proportion <- 
+  gender_word_frequencies %>%
   group_by(decade, gender) %>%
-  mutate(total_word_count = sum(count),
-         word_proportion = count / total_word_count) %>%
-  arrange(decade, gender, desc(word_proportion)) %>%
-  mutate(cumulative_proportion = cumsum(word_proportion)) %>%
-  filter(cumulative_proportion <= cumulative_threshold) %>%
-  ungroup()
+  arrange(desc(prop), .by_group = TRUE) %>%
+  mutate(
+    total_prop = sum(prop),
+    cum_prop_of_group = cumsum(prop) / total_prop
+  ) %>%
+  ungroup() %>% select(decade, word, gender, prop, cum_prop_of_group)
 
-# Flip female counts for stacking below center (for visualization)
-top_gendered_words <- top_gendered_words %>%
-  mutate(display_count = ifelse(gender == "female", -count, count))
+gender_word_frequencies_cumulative_proportion%>%filter(gender=="female")
 
-# Order word_pair_group by total count so biggest stacks are closest to center
-ordered_pairs <- top_gendered_words %>%
-  group_by(word_pair_group) %>%
-  summarise(total = sum(abs(display_count)), .groups = "drop") %>%
-  arrange(desc(total)) %>%
-  pull(word_pair_group)
-
-top_gendered_words <- top_gendered_words %>%
-  mutate(word_pair_group = factor(word_pair_group, levels = ordered_pairs))
-
-# Create pretty labels like "he/she"
-pair_labels <- setNames(
-  paste0(male_words, "/", female_words),
-  paste0("pair_", seq_along(male_words))
-)
-
-# Filter out any word pair groups that aren't present in the plot (those with no count)
-top_gendered_words <- top_gendered_words %>%
-  filter(word_pair_group %in% unique(top_gendered_words$word_pair_group))
-
-# Create plot
-ggplot(top_gendered_words, aes(x = factor(decade), y = display_count, fill = word_pair_group)) +
-  geom_bar(stat = "identity", position = "stack") +
+gender_word_frequencies_cumulative_proportion %>%
+  filter(decade %% 70 == 20) %>%
+  ggplot(aes(
+    x = reorder(word, cum_prop_of_group),
+    y = cum_prop_of_group,
+  )) +
+  geom_line(aes(group = gender)) +
+  facet_grid(decade ~ gender, scales = "free_x", switch = "x") +
   labs(
-    title = "Gendered Word Usage Over Time",
-    subtitle = paste0("Top words contributing to ", cumulative_threshold * 100, "% of word counts by decade and gender"),
-    x = "Decade",
-    y = "Word Count (Female values plotted negative)",
-    fill = "Word Pair"
-  ) +
-  scale_y_continuous(labels = abs) +
-  scale_fill_manual(
-    values = hue_pal()(length(pair_labels)),
-    labels = pair_labels[unique(top_gendered_words$word_pair_group)]
+    title = "Cumulative Proportion of Word Contribution to a Decade",
+    x = "Words (Ordered by Proportion Within Group)",
+    y = "Cumulative Proportion of Group",
+    color = "Gender"
   ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    strip.placement = "outside",
+    panel.spacing = unit(1, "lines"),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ) +
+  # Add axis text only for bottom row
+  theme(axis.text.x.bottom = element_text(
+    angle = 90,
+    vjust = 0.5,
+    hjust = 1
+  ))
 
+```
+Clearly, a small number of words is making a large contribution to each gender group.
+
+
+### Analyses, repeated but with parallelized lists
+
+We repeat everything as before, but by first parallelizing the group lists. This means taking the lists to be only words for which the male and female complement were available as vectors for a given decade.
+
+An optional input variable, parallelize, was added to the utility functions that get the time series. We will re-plot everything and set parallelize to true.
+
+```{r plottingTsMenWomenParallel}
+men_women_trait_role_ts <-
+  list(
+    get_ts("men", "women", "trait", "engall", TRUE),
+    get_ts("men", "women", "role", "engall", TRUE),
+    get_ts("men", "women", "trait", "coha", TRUE),
+    get_ts("men", "women", "role", "coha", TRUE)
+  )
+plot_multiple_ts(men_women_trait_role_ts)
+
+men_women_agentic_communal_ts <-
+  list(
+    get_ts("men", "women", "agentic", "engall", TRUE),
+    get_ts("men", "women", "communal", "engall", TRUE),
+    get_ts("men", "women", "agentic", "coha", TRUE),
+    get_ts("men", "women", "communal", "coha", TRUE)
+  )
+plot_multiple_ts(men_women_agentic_communal_ts)
+
+men_women_trait_role_ts <-
+  list(
+    get_ts_averages("men", "agentic", "coha", TRUE),
+    get_ts_averages("men", "communal", "coha", TRUE),
+    get_ts_averages("women", "agentic", "coha", TRUE),
+    get_ts_averages("women", "communal", "coha", TRUE)
+  )
+plot_multiple_ts_averages(men_women_trait_role_ts)
+
+men_women_trait_role_ts <-
+  list(
+    get_ts_averages("men", "agentic", "engall", TRUE),
+    get_ts_averages("men", "communal", "engall", TRUE),
+    get_ts_averages("women", "agentic", "engall", TRUE),
+    get_ts_averages("women", "communal", "engall", TRUE)
+  )
+plot_multiple_ts_averages(men_women_trait_role_ts)
 
 ```
